@@ -36,8 +36,9 @@ function loadConfig(env = process.env) {
     // ports
     proxyPort: toInt(env.PROXY_PORT ?? '8080', 'PROXY_PORT'),
 
-    // the backend we forward to (single upstream for now)
-    upstreamUrl: required(env.UPSTREAM_URL ?? 'http://localhost:9001', 'UPSTREAM_URL'),
+    // the backends we route to, by path prefix
+    backendAUrl: required(env.BACKEND_A_URL ?? 'http://localhost:9001', 'BACKEND_A_URL'),
+    backendBUrl: required(env.BACKEND_B_URL ?? 'http://localhost:9002', 'BACKEND_B_URL'),
 
     // WAF behaviour: off = don't inspect, detect = log only, block = 403
     wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', ['off', 'detect', 'block']),

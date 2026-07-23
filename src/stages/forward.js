@@ -13,7 +13,7 @@ export const forwardStage = {
     return new Promise((resolve) => {
       ctx.res.on('finish', resolve);
       ctx.res.on('close', resolve);
-      forward(ctx.req, ctx.res);
+      forward(ctx);
     });
   },
 };

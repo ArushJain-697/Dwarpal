@@ -10,6 +10,7 @@
 import http from 'node:http';
 
 const PORT = process.env.BACKEND_PORT ?? 9001;
+const NAME = process.env.BACKEND_NAME ?? 'dummy';
 
 const server = http.createServer((req, res) => {
   let body = '';
@@ -19,7 +20,7 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify(
         {
-          backend: 'dummy',
+          backend: NAME,
           method: req.method,
           path: req.url,
           gotForwardedFor: req.headers['x-forwarded-for'] ?? null,
@@ -33,5 +34,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[backend] dummy backend listening on http://localhost:${PORT}`);
+  console.log(`[backend:${NAME}] listening on http://localhost:${PORT}`);
 });

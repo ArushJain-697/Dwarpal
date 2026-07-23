@@ -11,7 +11,8 @@ import { startServer } from './server.js';
 function main() {
   const startedAt = new Date().toISOString();
   console.log(`[dwarpal] starting up (${startedAt})`);
-  console.log(`[dwarpal] upstream: ${config.upstreamUrl}`);
+  console.log(`[dwarpal] backend A: ${config.backendAUrl}`);
+  console.log(`[dwarpal] backend B: ${config.backendBUrl}`);
 
   startServer();
 }

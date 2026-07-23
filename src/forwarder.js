@@ -6,7 +6,6 @@
  */
 
 import http from 'node:http';
-import { config } from './config.js';
 
 // Hop-by-hop headers must not be forwarded by a proxy (RFC 7230).
 const HOP_BY_HOP = new Set([
@@ -30,8 +29,9 @@ function sanitizeHeaders(headers) {
   return out;
 }
 
-export function forward(req, res) {
-  const upstream = new URL(config.upstreamUrl);
+export function forward(ctx) {
+  const { req, res } = ctx;
+  const upstream = new URL(ctx.upstream);
 
   const options = {
     protocol: upstream.protocol,
