@@ -7,21 +7,12 @@
  */
 
 import { matchRules } from '../waf/rules.js';
-
-// URL-decode for inspection. A malformed encoding is itself suspicious, so we
-// fall back to the raw value rather than crashing.
-function decode(value) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
+import { canonicalize } from '../waf/normalize.js';
 
 export const wafStage = {
   name: 'waf',
   handle(ctx) {
-    const hit = matchRules(decode(ctx.rawQuery));
+    const hit = matchRules(canonicalize(ctx.rawQuery));
 
     if (hit) {
       ctx.waf = { blocked: true, ruleId: hit.id, category: hit.category };
