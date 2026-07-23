@@ -37,6 +37,9 @@ const pipeline = createPipeline(stages, finalize);
 function handleRequest(req, res) {
   const ctx = createContext(req, res);
   res.setHeader('x-request-id', ctx.id);
+  // Security headers on every response (kept unless a stage overrides them).
+  res.setHeader('x-content-type-options', 'nosniff');
+  res.setHeader('x-frame-options', 'DENY');
   pipeline.run(ctx);
 }
 

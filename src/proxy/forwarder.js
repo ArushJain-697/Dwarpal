@@ -36,6 +36,20 @@ function sanitizeHeaders(headers) {
   return out;
 }
 
+// Response headers that reveal the backend stack — strip them so we don't
+// advertise what's behind the proxy.
+const STRIP_RESPONSE = new Set(['server', 'x-powered-by']);
+
+function responseHeaders(upstreamHeaders) {
+  const out = {};
+  for (const [name, value] of Object.entries(upstreamHeaders)) {
+    const lower = name.toLowerCase();
+    if (HOP_BY_HOP.has(lower) || STRIP_RESPONSE.has(lower)) continue;
+    out[name] = value;
+  }
+  return out;
+}
+
 export function forward(ctx) {
   attempt(ctx, new Set(), 1);
 }
@@ -66,7 +80,7 @@ function attempt(ctx, tried, attemptNo) {
   const proxyReq = http.request(options, (upstreamRes) => {
     settled = true;
     onSuccess(target); // got a response — the target is alive
-    res.writeHead(upstreamRes.statusCode ?? 502, sanitizeHeaders(upstreamRes.headers));
+    res.writeHead(upstreamRes.statusCode ?? 502, responseHeaders(upstreamRes.headers));
     upstreamRes.pipe(res);
   });
 
