@@ -9,7 +9,7 @@
  *   block  -> short-circuit with a 403 before it reaches the upstream
  */
 
-import { config } from '../config/env.js';
+import { getWafMode } from '../config/settings.js';
 import { matchRules } from '../waf/rules.js';
 import { canonicalize } from '../waf/normalize.js';
 import { collectFields } from '../waf/fields.js';
@@ -27,7 +27,8 @@ function findHit(ctx) {
 export const wafStage = {
   name: 'waf',
   handle(ctx) {
-    if (config.wafMode === 'off') {
+    const mode = getWafMode();
+    if (mode === 'off') {
       return { type: 'continue' };
     }
 
@@ -36,7 +37,7 @@ export const wafStage = {
       return { type: 'continue' };
     }
 
-    const blocking = config.wafMode === 'block';
+    const blocking = mode === 'block';
     ctx.waf = {
       blocked: blocking,
       ruleId: hit.id,
