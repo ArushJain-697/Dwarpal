@@ -67,6 +67,11 @@ function loadConfig(env = process.env) {
     breakerThreshold: toInt(env.BREAKER_THRESHOLD ?? '5', 'BREAKER_THRESHOLD'),
     breakerCooldownMs: toInt(env.BREAKER_COOLDOWN_MS ?? '10000', 'BREAKER_COOLDOWN_MS'),
 
+    // how many times to retry a failed forward onto a different healthy target
+    maxRetries: toInt(env.MAX_RETRIES ?? '1', 'MAX_RETRIES'),
+    // give up on an upstream that hasn't responded within this many ms
+    upstreamTimeoutMs: toInt(env.UPSTREAM_TIMEOUT_MS ?? '30000', 'UPSTREAM_TIMEOUT_MS'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

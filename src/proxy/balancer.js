@@ -12,9 +12,11 @@ import { isReady, reserve } from './breaker.js';
 // route id -> next index to use
 const cursors = new Map();
 
-export function pickTarget(route) {
+export function pickTarget(route, exclude = new Set()) {
   const pool = route.pool ?? [];
-  const candidates = pool.filter((url) => isHealthy(url) && isReady(url));
+  const candidates = pool.filter(
+    (url) => !exclude.has(url) && isHealthy(url) && isReady(url),
+  );
   if (candidates.length === 0) {
     return null;
   }
