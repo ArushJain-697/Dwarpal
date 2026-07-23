@@ -14,6 +14,8 @@ import { installShutdown } from './proxy/lifecycle.js';
 import { configureLimiter } from './ratelimit/limiter.js';
 import { startLogWriter } from './obs/batchLogWriter.js';
 import { startPartitionMaintenance } from './db/partitions.js';
+import { subscribeConfig } from './redis/pubsub.js';
+import { setWafMode } from './config/settings.js';
 
 function main() {
   const startedAt = new Date().toISOString();
@@ -33,6 +35,14 @@ function main() {
 
   startLogWriter();
   startPartitionMaintenance();
+
+  // Apply config changes published by any instance (WAF toggle, etc).
+  subscribeConfig((payload) => {
+    if (payload.wafMode) {
+      setWafMode(payload.wafMode);
+      console.log(`[config] applied wafMode=${payload.wafMode} from reload`);
+    }
+  });
 
   startHealthChecks([config.backendAPool, config.backendBPool], {
     intervalMs: config.healthIntervalMs,

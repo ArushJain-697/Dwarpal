@@ -12,6 +12,7 @@ import { snapshot } from '../obs/metrics.js';
 import { getRecent } from '../obs/recentLog.js';
 import { queryLogs } from '../db/logsQuery.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
+import { publishConfig } from '../redis/pubsub.js';
 import { attachWebSocket } from './ws.js';
 
 const WAF_MODES = ['off', 'detect', 'block'];
@@ -78,7 +79,8 @@ async function handle(req, res) {
     if (!WAF_MODES.includes(parsed.mode)) {
       return sendJson(res, 400, { error: `mode must be one of ${WAF_MODES.join(', ')}` });
     }
-    setWafMode(parsed.mode);
+    setWafMode(parsed.mode); // apply locally right away
+    publishConfig({ wafMode: parsed.mode }); // and tell the other instances
     console.log(`[admin] waf mode set to ${parsed.mode}`);
     return sendJson(res, 200, { mode: parsed.mode });
   }
