@@ -11,6 +11,7 @@ import { createContext } from '../core/context.js';
 import { createPipeline } from '../core/pipeline.js';
 import { logger } from '../obs/logger.js';
 import { buildRecord } from '../obs/record.js';
+import { recordRequest } from '../obs/metrics.js';
 import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
 import { routeStage } from '../stages/route.js';
@@ -22,7 +23,9 @@ import { forwardStage } from '../stages/forward.js';
 const stages = [ratelimitStage, wafStage, routeStage, loadbalanceStage, forwardStage];
 
 function finalize(ctx) {
-  logger.info(buildRecord(ctx));
+  const record = buildRecord(ctx);
+  logger.info(record);
+  recordRequest(record);
 }
 
 const pipeline = createPipeline(stages, finalize);
