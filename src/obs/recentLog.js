@@ -11,7 +11,7 @@ const MAX = 1000;
 const buffer = [];
 
 export function addRecord(record) {
-  buffer.push({ ...record, ts: Date.now() });
+  buffer.push(record); // record already carries its own ts
   if (buffer.length > MAX) {
     buffer.shift(); // drop the oldest
   }

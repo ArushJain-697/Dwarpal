@@ -16,6 +16,7 @@ export function buildRecord(ctx) {
   return {
     msg: 'request',
     id: ctx.id,
+    ts: Date.now(),
     method: ctx.method,
     path: ctx.path,
     status: ctx.res.statusCode,
@@ -23,6 +24,7 @@ export function buildRecord(ctx) {
     decision,
     category: ctx.waf?.category ?? null,
     ruleId: ctx.waf?.ruleId ?? null,
+    anomaly: ctx.waf?.anomaly ?? 0,
     clientIp: ctx.clientIp,
     upstream: ctx.upstream ?? null,
   };

@@ -88,6 +88,11 @@ function loadConfig(env = process.env) {
     // Postgres connection string (optional — logging degrades gracefully if unset)
     databaseUrl: env.DATABASE_URL ?? null,
 
+    // batched log writer: buffer cap, and flush triggers (rows / ms)
+    logBufferMax: toInt(env.LOG_BUFFER_MAX ?? '5000', 'LOG_BUFFER_MAX'),
+    logFlushN: toInt(env.LOG_FLUSH_N ?? '500', 'LOG_FLUSH_N'),
+    logFlushMs: toInt(env.LOG_FLUSH_MS ?? '1000', 'LOG_FLUSH_MS'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

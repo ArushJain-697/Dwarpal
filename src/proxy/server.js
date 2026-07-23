@@ -14,6 +14,7 @@ import { buildRecord } from '../obs/record.js';
 import { recordRequest } from '../obs/metrics.js';
 import { emitRequestEvent } from '../obs/eventBus.js';
 import { addRecord } from '../obs/recentLog.js';
+import { enqueue } from '../obs/batchLogWriter.js';
 import { ingestStage } from '../stages/ingest.js';
 import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
@@ -38,6 +39,7 @@ function finalize(ctx) {
   recordRequest(record);
   emitRequestEvent(record);
   addRecord(record);
+  enqueue(record); // non-blocking; batched to Postgres
 }
 
 const pipeline = createPipeline(stages, finalize);

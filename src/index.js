@@ -12,6 +12,7 @@ import { startHealthChecks } from './proxy/health.js';
 import { configureBreaker } from './proxy/breaker.js';
 import { installShutdown } from './proxy/lifecycle.js';
 import { configureLimiter } from './ratelimit/limiter.js';
+import { startLogWriter } from './obs/batchLogWriter.js';
 
 function main() {
   const startedAt = new Date().toISOString();
@@ -28,6 +29,8 @@ function main() {
     capacity: config.rlCapacity,
     refillPerSec: config.rlRefillPerSec,
   });
+
+  startLogWriter();
 
   startHealthChecks([config.backendAPool, config.backendBPool], {
     intervalMs: config.healthIntervalMs,
