@@ -4,7 +4,7 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev
+.PHONY: help init up down nuke logs ps dev migrate
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -22,6 +22,9 @@ down: ## Stop and remove containers (keeps volumes)
 
 nuke: ## Stop everything and wipe volumes — a clean slate
 	docker compose down -v --remove-orphans
+
+migrate: ## Run database migrations (inside the proxy container)
+	docker compose exec proxy node src/db/migrate.js
 
 logs: ## Tail logs from all services
 	docker compose logs -f

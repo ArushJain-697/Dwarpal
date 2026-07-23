@@ -85,6 +85,9 @@ function loadConfig(env = process.env) {
     // reject requests with more than this many headers (slow-loris / abuse)
     maxHeaderCount: toInt(env.MAX_HEADER_COUNT ?? '100', 'MAX_HEADER_COUNT'),
 
+    // Postgres connection string (optional — logging degrades gracefully if unset)
+    databaseUrl: env.DATABASE_URL ?? null,
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };
