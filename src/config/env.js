@@ -75,6 +75,10 @@ function loadConfig(env = process.env) {
     // on SIGTERM, how long to let in-flight requests drain before forcing exit
     shutdownDrainMs: toInt(env.SHUTDOWN_DRAIN_MS ?? '25000', 'SHUTDOWN_DRAIN_MS'),
 
+    // rate limit: bucket capacity (burst) and refill rate per second per client
+    rlCapacity: toInt(env.RL_CAPACITY ?? '100', 'RL_CAPACITY'),
+    rlRefillPerSec: toInt(env.RL_REFILL_PER_SEC ?? '50', 'RL_REFILL_PER_SEC'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

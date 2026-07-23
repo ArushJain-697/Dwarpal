@@ -9,14 +9,15 @@ import http from 'node:http';
 import { config } from '../config/env.js';
 import { createContext } from '../core/context.js';
 import { createPipeline } from '../core/pipeline.js';
+import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
 import { routeStage } from '../stages/route.js';
 import { loadbalanceStage } from '../stages/loadbalance.js';
 import { forwardStage } from '../stages/forward.js';
 
-// The ordered list of stages a request flows through. New behaviour (rate
-// limiting, health checks) slots in here as additional stages.
-const stages = [wafStage, routeStage, loadbalanceStage, forwardStage];
+// The ordered list of stages a request flows through. New behaviour slots in
+// here as additional stages.
+const stages = [ratelimitStage, wafStage, routeStage, loadbalanceStage, forwardStage];
 
 function finalize(ctx) {
   const durationMs = Number(process.hrtime.bigint() - ctx.startedAt) / 1e6;
