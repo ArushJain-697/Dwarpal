@@ -10,6 +10,7 @@ import http from 'node:http';
 import { config } from '../config/env.js';
 import { snapshot } from '../obs/metrics.js';
 import { getRecent } from '../obs/recentLog.js';
+import { queryLogs } from '../db/logsQuery.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
 import { attachWebSocket } from './ws.js';
 
@@ -48,7 +49,19 @@ async function handle(req, res) {
   if (req.method === 'GET' && path === '/api/logs') {
     const limit = Math.min(Number(url.searchParams.get('limit')) || 100, 200);
     const decision = url.searchParams.get('decision');
-    return sendJson(res, 200, { logs: getRecent({ limit, decision }) });
+    const category = url.searchParams.get('category');
+    const beforeTs = url.searchParams.get('before_ts');
+    const beforeId = url.searchParams.get('before_id');
+
+    const rows = await queryLogs({ limit, decision, category, beforeTs, beforeId });
+    if (rows === null) {
+      // No database configured — fall back to the in-memory ring buffer.
+      return sendJson(res, 200, { logs: getRecent({ limit, decision }), source: 'memory' });
+    }
+
+    const last = rows[rows.length - 1];
+    const nextCursor = last ? { ts: last.ts, id: last.id } : null;
+    return sendJson(res, 200, { logs: rows, nextCursor, source: 'postgres' });
   }
 
   if (req.method === 'GET' && path === '/api/settings/waf') {
