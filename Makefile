@@ -4,7 +4,7 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev migrate
+.PHONY: help init up down nuke logs ps dev migrate seed
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -25,6 +25,9 @@ nuke: ## Stop everything and wipe volumes — a clean slate
 
 migrate: ## Run database migrations (inside the proxy container)
 	docker compose exec proxy node src/db/migrate.js
+
+seed: ## Fill the database with ~24h of history + an attack spike
+	docker compose exec proxy node src/scripts/seed.js
 
 logs: ## Tail logs from all services
 	docker compose logs -f
