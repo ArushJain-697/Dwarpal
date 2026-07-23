@@ -6,13 +6,13 @@
  */
 
 import http from 'node:http';
-import { config } from './config.js';
-import { createContext } from './context.js';
-import { createPipeline } from './pipeline.js';
-import { wafStage } from './stages/waf.js';
-import { routeStage } from './stages/route.js';
-import { loadbalanceStage } from './stages/loadbalance.js';
-import { forwardStage } from './stages/forward.js';
+import { config } from '../config/env.js';
+import { createContext } from '../core/context.js';
+import { createPipeline } from '../core/pipeline.js';
+import { wafStage } from '../stages/waf.js';
+import { routeStage } from '../stages/route.js';
+import { loadbalanceStage } from '../stages/loadbalance.js';
+import { forwardStage } from '../stages/forward.js';
 
 // The ordered list of stages a request flows through. New behaviour (rate
 // limiting, health checks) slots in here as additional stages.

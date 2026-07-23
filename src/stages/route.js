@@ -5,7 +5,7 @@
  * the request, so we short-circuit with a 404.
  */
 
-import { matchRoute } from '../router.js';
+import { matchRoute } from '../proxy/router.js';
 
 export const routeStage = {
   name: 'route',

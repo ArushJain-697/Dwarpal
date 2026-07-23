@@ -5,7 +5,7 @@
  * response has finished, so the pipeline's finalize step sees accurate timing.
  */
 
-import { forward } from '../forwarder.js';
+import { forward } from '../proxy/forwarder.js';
 
 export const forwardStage = {
   name: 'forward',

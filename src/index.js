@@ -5,10 +5,10 @@
  * are wired up in later steps.
  */
 
-import { config } from './config.js';
-import { startServer } from './server.js';
-import { startHealthChecks } from './health.js';
-import { configureBreaker } from './breaker.js';
+import { config } from './config/env.js';
+import { startServer } from './proxy/server.js';
+import { startHealthChecks } from './proxy/health.js';
+import { configureBreaker } from './proxy/breaker.js';
 
 function main() {
   const startedAt = new Date().toISOString();

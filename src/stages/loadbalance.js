@@ -6,7 +6,7 @@
  * the request, so we short-circuit with a 503.
  */
 
-import { pickTarget } from '../balancer.js';
+import { pickTarget } from '../proxy/balancer.js';
 
 export const loadbalanceStage = {
   name: 'loadbalance',

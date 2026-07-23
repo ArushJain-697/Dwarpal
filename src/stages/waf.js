@@ -9,7 +9,7 @@
  *   block  -> short-circuit with a 403 before it reaches the upstream
  */
 
-import { config } from '../config.js';
+import { config } from '../config/env.js';
 import { matchRules } from '../waf/rules.js';
 import { canonicalize } from '../waf/normalize.js';
 import { collectFields } from '../waf/fields.js';

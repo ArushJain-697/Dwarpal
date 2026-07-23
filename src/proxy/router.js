@@ -6,7 +6,7 @@
  * table is built from config; later it comes from the database.
  */
 
-import { config } from './config.js';
+import { config } from '../config/env.js';
 
 const ROUTES = [
   { id: 'a', prefix: '/api/a', pool: config.backendAPool },
