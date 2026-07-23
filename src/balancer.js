@@ -6,17 +6,20 @@
  * selection comes in a later step.
  */
 
+import { isHealthy } from './health.js';
+
 // route id -> next index to use
 const cursors = new Map();
 
 export function pickTarget(route) {
-  const pool = route.pool;
-  if (!pool || pool.length === 0) {
+  const pool = route.pool ?? [];
+  const healthy = pool.filter(isHealthy);
+  if (healthy.length === 0) {
     return null;
   }
 
   const index = cursors.get(route.id) ?? 0;
-  const target = pool[index % pool.length];
-  cursors.set(route.id, (index + 1) % pool.length);
+  const target = healthy[index % healthy.length];
+  cursors.set(route.id, (index + 1) % healthy.length);
   return target;
 }

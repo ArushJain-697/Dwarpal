@@ -13,6 +13,12 @@ const PORT = process.env.BACKEND_PORT ?? 9001;
 const NAME = process.env.BACKEND_NAME ?? 'dummy';
 
 const server = http.createServer((req, res) => {
+  if (req.url === '/healthz') {
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('ok\n');
+    return;
+  }
+
   let body = '';
   req.on('data', (chunk) => (body += chunk));
   req.on('end', () => {

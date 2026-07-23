@@ -7,6 +7,7 @@
 
 import { config } from './config.js';
 import { startServer } from './server.js';
+import { startHealthChecks } from './health.js';
 
 function main() {
   const startedAt = new Date().toISOString();
@@ -14,6 +15,7 @@ function main() {
   console.log(`[dwarpal] pool A: ${config.backendAPool.join(', ')}`);
   console.log(`[dwarpal] pool B: ${config.backendBPool.join(', ')}`);
 
+  startHealthChecks([config.backendAPool, config.backendBPool], config.healthIntervalMs);
   startServer();
 }
 
