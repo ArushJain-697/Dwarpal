@@ -23,6 +23,14 @@ function toInt(value, name) {
   return n;
 }
 
+function oneOf(value, name, allowed) {
+  if (!allowed.includes(value)) {
+    console.error(`[config] env var ${name} must be one of ${allowed.join(', ')}, got: ${value}`);
+    process.exit(1);
+  }
+  return value;
+}
+
 function loadConfig(env = process.env) {
   const config = {
     // ports
@@ -30,6 +38,9 @@ function loadConfig(env = process.env) {
 
     // the backend we forward to (single upstream for now)
     upstreamUrl: required(env.UPSTREAM_URL ?? 'http://localhost:9001', 'UPSTREAM_URL'),
+
+    // WAF behaviour: off = don't inspect, detect = log only, block = 403
+    wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', ['off', 'detect', 'block']),
 
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
