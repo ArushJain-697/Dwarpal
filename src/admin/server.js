@@ -9,6 +9,7 @@
 import http from 'node:http';
 import { config } from '../config/env.js';
 import { snapshot } from '../obs/metrics.js';
+import { getRecent } from '../obs/recentLog.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
 import { attachWebSocket } from './ws.js';
 
@@ -32,20 +33,29 @@ function readBody(req) {
 }
 
 async function handle(req, res) {
-  if (req.method === 'GET' && req.url === '/metrics') {
+  const url = new URL(req.url, 'http://localhost');
+  const path = url.pathname;
+
+  if (req.method === 'GET' && path === '/metrics') {
     return sendJson(res, 200, snapshot());
   }
 
-  if (req.method === 'GET' && req.url === '/healthz') {
+  if (req.method === 'GET' && path === '/healthz') {
     res.writeHead(200, { 'content-type': 'text/plain' });
     return res.end('ok\n');
   }
 
-  if (req.method === 'GET' && req.url === '/api/settings/waf') {
+  if (req.method === 'GET' && path === '/api/logs') {
+    const limit = Math.min(Number(url.searchParams.get('limit')) || 100, 200);
+    const decision = url.searchParams.get('decision');
+    return sendJson(res, 200, { logs: getRecent({ limit, decision }) });
+  }
+
+  if (req.method === 'GET' && path === '/api/settings/waf') {
     return sendJson(res, 200, { mode: getWafMode() });
   }
 
-  if (req.method === 'PUT' && req.url === '/api/settings/waf') {
+  if (req.method === 'PUT' && path === '/api/settings/waf') {
     let parsed;
     try {
       parsed = JSON.parse(await readBody(req));
