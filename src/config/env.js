@@ -82,6 +82,9 @@ function loadConfig(env = process.env) {
     rlCapacity: toInt(env.RL_CAPACITY ?? '100', 'RL_CAPACITY'),
     rlRefillPerSec: toInt(env.RL_REFILL_PER_SEC ?? '50', 'RL_REFILL_PER_SEC'),
 
+    // reject requests with more than this many headers (slow-loris / abuse)
+    maxHeaderCount: toInt(env.MAX_HEADER_COUNT ?? '100', 'MAX_HEADER_COUNT'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

@@ -14,6 +14,7 @@ import { buildRecord } from '../obs/record.js';
 import { recordRequest } from '../obs/metrics.js';
 import { emitRequestEvent } from '../obs/eventBus.js';
 import { addRecord } from '../obs/recentLog.js';
+import { ingestStage } from '../stages/ingest.js';
 import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
 import { routeStage } from '../stages/route.js';
@@ -22,7 +23,14 @@ import { forwardStage } from '../stages/forward.js';
 
 // The ordered list of stages a request flows through. New behaviour slots in
 // here as additional stages.
-const stages = [ratelimitStage, wafStage, routeStage, loadbalanceStage, forwardStage];
+const stages = [
+  ingestStage,
+  ratelimitStage,
+  wafStage,
+  routeStage,
+  loadbalanceStage,
+  forwardStage,
+];
 
 function finalize(ctx) {
   const record = buildRecord(ctx);
@@ -44,7 +52,17 @@ function handleRequest(req, res) {
 }
 
 export function createServer() {
-  return http.createServer(handleRequest);
+  const server = http.createServer(handleRequest);
+
+  // Slow-loris and abuse protection at the socket level. maxHeadersCount is a
+  // hard ceiling kept well above the ingest stage's limit — Node silently
+  // truncates at this count, so the stage must see the real total to reject it.
+  server.requestTimeout = 30_000;
+  server.headersTimeout = 10_000;
+  server.keepAliveTimeout = 65_000;
+  server.maxHeadersCount = 1000;
+
+  return server;
 }
 
 export function startServer() {
