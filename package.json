@@ -1,0 +1,14 @@
+{
+  "name": "dwarpal",
+  "version": "0.0.1",
+  "description": "A self-hosted reverse proxy and web application firewall",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  }
+}
