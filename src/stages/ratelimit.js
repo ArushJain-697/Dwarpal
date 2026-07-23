@@ -10,8 +10,8 @@ import { take } from '../ratelimit/limiter.js';
 
 export const ratelimitStage = {
   name: 'ratelimit',
-  handle(ctx) {
-    const result = take(ctx.clientIp);
+  async handle(ctx) {
+    const result = await take(ctx.clientIp);
     ctx.rateLimit = { remaining: result.remaining, limited: !result.allowed };
 
     if (!result.allowed) {
