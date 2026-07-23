@@ -48,6 +48,7 @@ function loadConfig(env = process.env) {
   const config = {
     // ports
     proxyPort: toInt(env.PROXY_PORT ?? '8080', 'PROXY_PORT'),
+    adminPort: toInt(env.ADMIN_PORT ?? '3000', 'ADMIN_PORT'),
 
     // the backend pools we route to, by path prefix (comma-separated URLs)
     backendAPool: toList(env.BACKEND_A_URL ?? 'http://localhost:9001,http://localhost:9011', 'BACKEND_A_URL'),

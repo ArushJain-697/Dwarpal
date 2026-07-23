@@ -7,6 +7,7 @@
 
 import { config } from './config/env.js';
 import { startServer } from './proxy/server.js';
+import { startAdminServer } from './admin/server.js';
 import { startHealthChecks } from './proxy/health.js';
 import { configureBreaker } from './proxy/breaker.js';
 import { installShutdown } from './proxy/lifecycle.js';
@@ -35,6 +36,7 @@ function main() {
   });
 
   const server = startServer();
+  startAdminServer();
   installShutdown(server, { drainMs: config.shutdownDrainMs });
 }
 
