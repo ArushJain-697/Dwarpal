@@ -24,7 +24,6 @@ export const routeStage = {
     }
 
     ctx.route = route;
-    ctx.upstream = route.upstream;
     return { type: 'continue' };
   },
 };

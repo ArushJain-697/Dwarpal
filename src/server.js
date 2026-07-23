@@ -11,11 +11,12 @@ import { createContext } from './context.js';
 import { createPipeline } from './pipeline.js';
 import { wafStage } from './stages/waf.js';
 import { routeStage } from './stages/route.js';
+import { loadbalanceStage } from './stages/loadbalance.js';
 import { forwardStage } from './stages/forward.js';
 
 // The ordered list of stages a request flows through. New behaviour (rate
-// limiting, load balancing) slots in here as additional stages.
-const stages = [wafStage, routeStage, forwardStage];
+// limiting, health checks) slots in here as additional stages.
+const stages = [wafStage, routeStage, loadbalanceStage, forwardStage];
 
 function finalize(ctx) {
   const durationMs = Number(process.hrtime.bigint() - ctx.startedAt) / 1e6;

@@ -31,14 +31,27 @@ function oneOf(value, name, allowed) {
   return value;
 }
 
+// Parse a comma-separated list of upstream URLs into a clean array.
+function toList(value, name) {
+  const list = value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (list.length === 0) {
+    console.error(`[config] env var ${name} must have at least one URL`);
+    process.exit(1);
+  }
+  return list;
+}
+
 function loadConfig(env = process.env) {
   const config = {
     // ports
     proxyPort: toInt(env.PROXY_PORT ?? '8080', 'PROXY_PORT'),
 
-    // the backends we route to, by path prefix
-    backendAUrl: required(env.BACKEND_A_URL ?? 'http://localhost:9001', 'BACKEND_A_URL'),
-    backendBUrl: required(env.BACKEND_B_URL ?? 'http://localhost:9002', 'BACKEND_B_URL'),
+    // the backend pools we route to, by path prefix (comma-separated URLs)
+    backendAPool: toList(env.BACKEND_A_URL ?? 'http://localhost:9001,http://localhost:9011', 'BACKEND_A_URL'),
+    backendBPool: toList(env.BACKEND_B_URL ?? 'http://localhost:9002', 'BACKEND_B_URL'),
 
     // WAF behaviour: off = don't inspect, detect = log only, block = 403
     wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', ['off', 'detect', 'block']),

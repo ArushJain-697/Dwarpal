@@ -9,8 +9,8 @@
 import { config } from './config.js';
 
 const ROUTES = [
-  { id: 'a', prefix: '/api/a', upstream: config.backendAUrl },
-  { id: 'b', prefix: '/api/b', upstream: config.backendBUrl },
+  { id: 'a', prefix: '/api/a', pool: config.backendAPool },
+  { id: 'b', prefix: '/api/b', pool: config.backendBPool },
 ];
 
 export function matchRoute(path) {

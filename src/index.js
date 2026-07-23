@@ -11,8 +11,8 @@ import { startServer } from './server.js';
 function main() {
   const startedAt = new Date().toISOString();
   console.log(`[dwarpal] starting up (${startedAt})`);
-  console.log(`[dwarpal] backend A: ${config.backendAUrl}`);
-  console.log(`[dwarpal] backend B: ${config.backendBUrl}`);
+  console.log(`[dwarpal] pool A: ${config.backendAPool.join(', ')}`);
+  console.log(`[dwarpal] pool B: ${config.backendBPool.join(', ')}`);
 
   startServer();
 }
