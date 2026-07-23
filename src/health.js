@@ -1,21 +1,54 @@
 /**
- * Backend health checks.
+ * Backend health checks with hysteresis.
  *
- * A background timer probes each backend's /healthz. The balancer asks
- * isHealthy() before routing to a target, so a backend that goes down stops
- * receiving traffic until it recovers.
+ * A background timer probes each backend's /healthz. To avoid flapping, a
+ * target only flips state after a run of consecutive results:
  *
- * A target is treated as healthy until proven otherwise, so a fresh boot
- * doesn't 503 everything before the first probe lands.
+ *   healthy  -> unhealthy   after `unhealthyAfter` consecutive failures
+ *   unhealthy -> healthy     after `healthyAfter` consecutive successes
+ *
+ * Targets start healthy so a fresh boot doesn't 503 before the first probe.
  */
 
 import http from 'node:http';
 
-// url -> boolean. Missing entry means "not yet checked" -> assume healthy.
+// url -> { healthy, ups, downs }
 const state = new Map();
 
+let thresholds = { healthyAfter: 2, unhealthyAfter: 3 };
+
+function entryFor(url) {
+  let e = state.get(url);
+  if (!e) {
+    e = { healthy: true, ups: 0, downs: 0 };
+    state.set(url, e);
+  }
+  return e;
+}
+
 export function isHealthy(url) {
-  return state.get(url) !== false;
+  const e = state.get(url);
+  return e ? e.healthy : true;
+}
+
+function recordSuccess(url) {
+  const e = entryFor(url);
+  e.ups += 1;
+  e.downs = 0;
+  if (!e.healthy && e.ups >= thresholds.healthyAfter) {
+    e.healthy = true;
+    console.log(`[health] ${url} is UP`);
+  }
+}
+
+function recordFailure(url) {
+  const e = entryFor(url);
+  e.downs += 1;
+  e.ups = 0;
+  if (e.healthy && e.downs >= thresholds.unhealthyAfter) {
+    e.healthy = false;
+    console.log(`[health] ${url} is DOWN`);
+  }
 }
 
 function probe(url) {
@@ -29,26 +62,30 @@ function probe(url) {
       timeout: 2000,
     },
     (res) => {
-      state.set(url, res.statusCode === 200);
-      res.resume(); // drain and free the socket
+      if (res.statusCode === 200) recordSuccess(url);
+      else recordFailure(url);
+      res.resume();
     },
   );
 
-  req.on('error', () => state.set(url, false));
+  req.on('error', () => recordFailure(url));
   req.on('timeout', () => {
     req.destroy();
-    state.set(url, false);
+    recordFailure(url);
   });
   req.end();
 }
 
-export function startHealthChecks(pools, intervalMs) {
+export function startHealthChecks(pools, options) {
+  const { intervalMs, healthyAfter, unhealthyAfter } = options;
+  thresholds = { healthyAfter, unhealthyAfter };
+
   const targets = [...new Set(pools.flat())];
 
   const runAll = () => targets.forEach(probe);
-  runAll(); // probe once immediately
+  runAll();
 
   const timer = setInterval(runAll, intervalMs);
-  timer.unref(); // don't keep the process alive just for probes
+  timer.unref();
   return timer;
 }

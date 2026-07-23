@@ -15,7 +15,11 @@ function main() {
   console.log(`[dwarpal] pool A: ${config.backendAPool.join(', ')}`);
   console.log(`[dwarpal] pool B: ${config.backendBPool.join(', ')}`);
 
-  startHealthChecks([config.backendAPool, config.backendBPool], config.healthIntervalMs);
+  startHealthChecks([config.backendAPool, config.backendBPool], {
+    intervalMs: config.healthIntervalMs,
+    healthyAfter: config.healthyAfter,
+    unhealthyAfter: config.unhealthyAfter,
+  });
   startServer();
 }
 

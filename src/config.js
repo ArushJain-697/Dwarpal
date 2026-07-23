@@ -59,6 +59,10 @@ function loadConfig(env = process.env) {
     // how often to probe each backend's /healthz
     healthIntervalMs: toInt(env.HEALTH_INTERVAL_MS ?? '5000', 'HEALTH_INTERVAL_MS'),
 
+    // consecutive results needed to flip a backend up / down (anti-flapping)
+    healthyAfter: toInt(env.HEALTH_HEALTHY_AFTER ?? '2', 'HEALTH_HEALTHY_AFTER'),
+    unhealthyAfter: toInt(env.HEALTH_UNHEALTHY_AFTER ?? '3', 'HEALTH_UNHEALTHY_AFTER'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };
