@@ -9,6 +9,7 @@ import { config } from './config/env.js';
 import { startServer } from './proxy/server.js';
 import { startHealthChecks } from './proxy/health.js';
 import { configureBreaker } from './proxy/breaker.js';
+import { installShutdown } from './proxy/lifecycle.js';
 
 function main() {
   const startedAt = new Date().toISOString();
@@ -26,7 +27,9 @@ function main() {
     healthyAfter: config.healthyAfter,
     unhealthyAfter: config.unhealthyAfter,
   });
-  startServer();
+
+  const server = startServer();
+  installShutdown(server, { drainMs: config.shutdownDrainMs });
 }
 
 main();

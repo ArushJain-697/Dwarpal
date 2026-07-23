@@ -72,6 +72,9 @@ function loadConfig(env = process.env) {
     // give up on an upstream that hasn't responded within this many ms
     upstreamTimeoutMs: toInt(env.UPSTREAM_TIMEOUT_MS ?? '30000', 'UPSTREAM_TIMEOUT_MS'),
 
+    // on SIGTERM, how long to let in-flight requests drain before forcing exit
+    shutdownDrainMs: toInt(env.SHUTDOWN_DRAIN_MS ?? '25000', 'SHUTDOWN_DRAIN_MS'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

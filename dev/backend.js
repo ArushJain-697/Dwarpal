@@ -19,6 +19,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Deliberately slow endpoint for testing drain / timeouts.
+  if (req.url.startsWith('/slow')) {
+    setTimeout(() => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end(`slow ok from ${NAME}\n`);
+    }, 1500);
+    return;
+  }
+
   let body = '';
   req.on('data', (chunk) => (body += chunk));
   req.on('end', () => {
