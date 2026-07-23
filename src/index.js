@@ -13,6 +13,7 @@ import { configureBreaker } from './proxy/breaker.js';
 import { installShutdown } from './proxy/lifecycle.js';
 import { configureLimiter } from './ratelimit/limiter.js';
 import { startLogWriter } from './obs/batchLogWriter.js';
+import { startPartitionMaintenance } from './db/partitions.js';
 
 function main() {
   const startedAt = new Date().toISOString();
@@ -31,6 +32,7 @@ function main() {
   });
 
   startLogWriter();
+  startPartitionMaintenance();
 
   startHealthChecks([config.backendAPool, config.backendBPool], {
     intervalMs: config.healthIntervalMs,

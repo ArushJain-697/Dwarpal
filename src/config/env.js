@@ -93,6 +93,9 @@ function loadConfig(env = process.env) {
     logFlushN: toInt(env.LOG_FLUSH_N ?? '500', 'LOG_FLUSH_N'),
     logFlushMs: toInt(env.LOG_FLUSH_MS ?? '1000', 'LOG_FLUSH_MS'),
 
+    // how many days of request_logs partitions to keep pre-created ahead
+    partitionDaysAhead: toInt(env.PARTITION_DAYS_AHEAD ?? '7', 'PARTITION_DAYS_AHEAD'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };

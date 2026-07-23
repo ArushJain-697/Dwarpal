@@ -12,6 +12,7 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
+    "ioredis": "^5.4.0",
     "pg": "^8.13.0",
     "ws": "^8.18.0"
   }
