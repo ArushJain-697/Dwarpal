@@ -38,6 +38,15 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const path = url.pathname;
 
+  // The dashboard is served from a different origin (port), so allow CORS.
+  res.setHeader('access-control-allow-origin', '*');
+  res.setHeader('access-control-allow-methods', 'GET, PUT, OPTIONS');
+  res.setHeader('access-control-allow-headers', 'content-type');
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    return res.end();
+  }
+
   if (req.method === 'GET' && path === '/metrics') {
     return sendJson(res, 200, snapshot());
   }
