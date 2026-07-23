@@ -1,0 +1,13 @@
+# Development image for the proxy: installs deps, then runs under node --watch.
+# In dev the source is bind-mounted over /app (see compose.yaml), with an
+# anonymous volume keeping the image's node_modules intact.
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+CMD ["node", "--watch", "src/index.js"]
