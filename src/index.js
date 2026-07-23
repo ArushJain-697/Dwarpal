@@ -8,12 +8,18 @@
 import { config } from './config.js';
 import { startServer } from './server.js';
 import { startHealthChecks } from './health.js';
+import { configureBreaker } from './breaker.js';
 
 function main() {
   const startedAt = new Date().toISOString();
   console.log(`[dwarpal] starting up (${startedAt})`);
   console.log(`[dwarpal] pool A: ${config.backendAPool.join(', ')}`);
   console.log(`[dwarpal] pool B: ${config.backendBPool.join(', ')}`);
+
+  configureBreaker({
+    threshold: config.breakerThreshold,
+    cooldownMs: config.breakerCooldownMs,
+  });
 
   startHealthChecks([config.backendAPool, config.backendBPool], {
     intervalMs: config.healthIntervalMs,

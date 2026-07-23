@@ -6,6 +6,7 @@
  */
 
 import http from 'node:http';
+import { onSuccess, onFailure } from './breaker.js';
 
 // Hop-by-hop headers must not be forwarded by a proxy (RFC 7230).
 const HOP_BY_HOP = new Set([
@@ -48,11 +49,13 @@ export function forward(ctx) {
   };
 
   const proxyReq = http.request(options, (upstreamRes) => {
+    onSuccess(ctx.upstream); // got a response — the target is alive
     res.writeHead(upstreamRes.statusCode ?? 502, sanitizeHeaders(upstreamRes.headers));
     upstreamRes.pipe(res);
   });
 
   proxyReq.on('error', (err) => {
+    onFailure(ctx.upstream); // connection-level failure counts against the breaker
     console.error(`[forward] upstream error: ${err.message}`);
     if (!res.headersSent) {
       res.writeHead(502, { 'content-type': 'text/plain' });

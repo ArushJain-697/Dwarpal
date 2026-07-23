@@ -63,6 +63,10 @@ function loadConfig(env = process.env) {
     healthyAfter: toInt(env.HEALTH_HEALTHY_AFTER ?? '2', 'HEALTH_HEALTHY_AFTER'),
     unhealthyAfter: toInt(env.HEALTH_UNHEALTHY_AFTER ?? '3', 'HEALTH_UNHEALTHY_AFTER'),
 
+    // circuit breaker: failures before tripping open, and how long to stay open
+    breakerThreshold: toInt(env.BREAKER_THRESHOLD ?? '5', 'BREAKER_THRESHOLD'),
+    breakerCooldownMs: toInt(env.BREAKER_COOLDOWN_MS ?? '10000', 'BREAKER_COOLDOWN_MS'),
+
     // logging
     logLevel: env.LOG_LEVEL ?? 'info',
   };
