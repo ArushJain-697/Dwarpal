@@ -12,6 +12,7 @@ import { createPipeline } from '../core/pipeline.js';
 import { logger } from '../obs/logger.js';
 import { buildRecord } from '../obs/record.js';
 import { recordRequest } from '../obs/metrics.js';
+import { emitRequestEvent } from '../obs/eventBus.js';
 import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
 import { routeStage } from '../stages/route.js';
@@ -26,6 +27,7 @@ function finalize(ctx) {
   const record = buildRecord(ctx);
   logger.info(record);
   recordRequest(record);
+  emitRequestEvent(record);
 }
 
 const pipeline = createPipeline(stages, finalize);

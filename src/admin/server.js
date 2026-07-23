@@ -10,6 +10,7 @@ import http from 'node:http';
 import { config } from '../config/env.js';
 import { snapshot } from '../obs/metrics.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
+import { attachWebSocket } from './ws.js';
 
 const WAF_MODES = ['off', 'detect', 'block'];
 
@@ -73,6 +74,7 @@ export function createAdminServer() {
 
 export function startAdminServer() {
   const server = createAdminServer();
+  attachWebSocket(server); // live dashboard feed on /ws
   server.listen(config.adminPort, () => {
     console.log(`[admin] listening on http://localhost:${config.adminPort}`);
   });
