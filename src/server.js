@@ -1,19 +1,17 @@
 /**
  * The proxy HTTP server.
  *
- * Right now every request just gets a placeholder response so we can prove
- * the server listens and handles traffic. Forwarding to the upstream comes
- * in the next step.
+ * Every request is forwarded to the configured upstream and the response is
+ * streamed back to the client.
  */
 
 import http from 'node:http';
 import { config } from './config.js';
+import { forward } from './forwarder.js';
 
 function handleRequest(req, res) {
   console.log(`[proxy] ${req.method} ${req.url}`);
-
-  res.writeHead(200, { 'content-type': 'text/plain' });
-  res.end('dwarpal: request received\n');
+  forward(req, res);
 }
 
 export function createServer() {
