@@ -21,6 +21,7 @@ export function createContext(req, res) {
     method: req.method,
     path: url.pathname,
     query: url.searchParams,
+    rawQuery: url.search, // the raw, still-encoded "?..." — used by the WAF
     headers: req.headers,
     clientIp: req.socket.remoteAddress,
 

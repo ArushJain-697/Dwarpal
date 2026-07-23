@@ -9,11 +9,12 @@ import http from 'node:http';
 import { config } from './config.js';
 import { createContext } from './context.js';
 import { createPipeline } from './pipeline.js';
+import { wafStage } from './stages/waf.js';
 import { forwardStage } from './stages/forward.js';
 
 // The ordered list of stages a request flows through. New behaviour (rate
-// limiting, WAF, routing) slots in here as additional stages.
-const stages = [forwardStage];
+// limiting, routing) slots in here as additional stages.
+const stages = [wafStage, forwardStage];
 
 function finalize(ctx) {
   const durationMs = Number(process.hrtime.bigint() - ctx.startedAt) / 1e6;
