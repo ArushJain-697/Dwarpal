@@ -1,23 +1,30 @@
 /**
  * WAF stage — inspects the request for attack patterns.
  *
- * Decodes the query string and runs it through the ruleset. On a match we
- * record the hit on the context and short-circuit with a 403 before the
- * request reaches the upstream.
+ * Gathers every inspectable field (path, query, selected headers), canonicalizes
+ * each, and runs the ruleset. On the first match we record the hit on the
+ * context and short-circuit with a 403 before the request reaches the upstream.
  */
 
 import { matchRules } from '../waf/rules.js';
 import { canonicalize } from '../waf/normalize.js';
+import { collectFields } from '../waf/fields.js';
 
 export const wafStage = {
   name: 'waf',
   handle(ctx) {
-    const hit = matchRules(canonicalize(ctx.rawQuery));
+    for (const field of collectFields(ctx)) {
+      const hit = matchRules(canonicalize(field.value));
+      if (!hit) continue;
 
-    if (hit) {
-      ctx.waf = { blocked: true, ruleId: hit.id, category: hit.category };
+      ctx.waf = {
+        blocked: true,
+        ruleId: hit.id,
+        category: hit.category,
+        source: field.source,
+      };
       console.log(
-        `[waf] blocked ${ctx.method} ${ctx.path} rule=${hit.id} category=${hit.category} id=${ctx.id}`,
+        `[waf] blocked ${ctx.method} ${ctx.path} rule=${hit.id} category=${hit.category} in=${field.source} id=${ctx.id}`,
       );
       return {
         type: 'short_circuit',
