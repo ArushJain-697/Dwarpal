@@ -56,6 +56,8 @@ function loadConfig(env = process.env) {
 
     // WAF behaviour: off = don't inspect, detect = log only, block = 403
     wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', ['off', 'detect', 'block']),
+    // anomaly score at which a request is blocked
+    wafThreshold: toInt(env.WAF_THRESHOLD ?? '5', 'WAF_THRESHOLD'),
 
     // how often to probe each backend's /healthz
     healthIntervalMs: toInt(env.HEALTH_INTERVAL_MS ?? '5000', 'HEALTH_INTERVAL_MS'),

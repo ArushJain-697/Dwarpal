@@ -1,27 +1,24 @@
 /**
- * WAF stage — inspects the request for attack patterns.
+ * WAF stage — inspects the request and scores it.
  *
- * Gathers every inspectable field (path, query, selected headers), canonicalizes
- * each, and runs the ruleset. Behaviour depends on config.wafMode:
+ * Gathers every inspectable field, runs the scoring engine, and acts on the
+ * anomaly score per the live WAF mode:
  *
  *   off    -> skip inspection entirely
- *   detect -> record + log the hit, but let the request through (shadow mode)
- *   block  -> short-circuit with a 403 before it reaches the upstream
+ *   detect -> record + log any hit, but let the request through (shadow mode)
+ *   block  -> short-circuit with a 403 when the score crosses the threshold
+ *
+ * The reported category is the highest-scoring hit, so a mixed payload is
+ * labelled by its strongest signal rather than whichever rule happened first.
  */
 
+import { config } from '../config/env.js';
 import { getWafMode } from '../config/settings.js';
-import { matchRules } from '../waf/rules.js';
-import { canonicalize } from '../waf/normalize.js';
+import { evaluate } from '../waf/engine.js';
 import { collectFields } from '../waf/fields.js';
 
-function findHit(ctx) {
-  for (const field of collectFields(ctx)) {
-    const hit = matchRules(canonicalize(field.value));
-    if (hit) {
-      return { ...hit, source: field.source };
-    }
-  }
-  return null;
+function topHit(hits) {
+  return hits.reduce((best, h) => (h.score > best.score ? h : best));
 }
 
 export const wafStage = {
@@ -32,26 +29,31 @@ export const wafStage = {
       return { type: 'continue' };
     }
 
-    const hit = findHit(ctx);
-    if (!hit) {
+    const result = evaluate(collectFields(ctx), config.wafThreshold);
+    if (result.hits.length === 0) {
       return { type: 'continue' };
     }
 
-    const blocking = mode === 'block';
+    const top = topHit(result.hits);
+    const blocking = mode === 'block' && result.blocked;
+
     ctx.waf = {
       blocked: blocking,
-      ruleId: hit.id,
-      category: hit.category,
-      source: hit.source,
+      anomaly: result.score,
+      ruleId: top.id,
+      category: top.category,
+      source: top.source,
     };
 
-    const label = blocking ? 'blocked' : 'detected';
-    console.log(
-      `[waf] ${label} ${ctx.method} ${ctx.path} rule=${hit.id} category=${hit.category} in=${hit.source} id=${ctx.id}`,
-    );
+    // Log when we act on it: a real block, or any hit in shadow mode.
+    if (blocking || mode === 'detect') {
+      const label = blocking ? 'blocked' : 'detected';
+      console.log(
+        `[waf] ${label} ${ctx.method} ${ctx.path} anomaly=${result.score} category=${top.category} in=${top.source} id=${ctx.id}`,
+      );
+    }
 
     if (!blocking) {
-      // detect mode: log the hit but let it through.
       return { type: 'continue' };
     }
 
