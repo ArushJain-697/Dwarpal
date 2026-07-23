@@ -9,6 +9,8 @@ import http from 'node:http';
 import { config } from '../config/env.js';
 import { createContext } from '../core/context.js';
 import { createPipeline } from '../core/pipeline.js';
+import { logger } from '../obs/logger.js';
+import { buildRecord } from '../obs/record.js';
 import { ratelimitStage } from '../stages/ratelimit.js';
 import { wafStage } from '../stages/waf.js';
 import { routeStage } from '../stages/route.js';
@@ -20,11 +22,7 @@ import { forwardStage } from '../stages/forward.js';
 const stages = [ratelimitStage, wafStage, routeStage, loadbalanceStage, forwardStage];
 
 function finalize(ctx) {
-  const durationMs = Number(process.hrtime.bigint() - ctx.startedAt) / 1e6;
-  const status = ctx.res.statusCode;
-  console.log(
-    `[proxy] ${ctx.method} ${ctx.path} -> ${status} ${durationMs.toFixed(1)}ms id=${ctx.id}`,
-  );
+  logger.info(buildRecord(ctx));
 }
 
 const pipeline = createPipeline(stages, finalize);
