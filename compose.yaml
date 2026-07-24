@@ -119,3 +119,14 @@ services:
     networks:
       - edge-net # host-published ports
       - app-net # reach backends / pg / redis
+
+  dashboard:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '5173:80'
+    depends_on:
+      - proxy
+    networks:
+      - edge-net # static assets; the browser talks to the admin port directly
