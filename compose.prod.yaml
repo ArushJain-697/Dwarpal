@@ -1,0 +1,104 @@
+# Production-style topology.
+#
+# Same isolation as dev, but the proxy runs as a built, hardened, non-root image
+# (no bind mount, no --watch), with a healthcheck and a graceful stop window so
+# in-flight requests can drain on shutdown. Run migrations once after first boot:
+#   docker compose -f compose.prod.yaml exec proxy node src/db/migrate.js
+
+networks:
+  edge-net:
+    driver: bridge
+  app-net:
+    internal: true
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dwarpal
+      POSTGRES_PASSWORD: dwarpal
+      POSTGRES_DB: dwarpal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dwarpal']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - app-net
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend-a1:
+    image: node:22-alpine
+    working_dir: /app
+    command: node dev/backend.js
+    environment: { BACKEND_NAME: A1, BACKEND_PORT: 9001 }
+    volumes: ['./backend/dev:/app/dev:ro']
+    networks: [app-net]
+
+  backend-a2:
+    image: node:22-alpine
+    working_dir: /app
+    command: node dev/backend.js
+    environment: { BACKEND_NAME: A2, BACKEND_PORT: 9001 }
+    volumes: ['./backend/dev:/app/dev:ro']
+    networks: [app-net]
+
+  backend-b:
+    image: node:22-alpine
+    working_dir: /app
+    command: node dev/backend.js
+    environment: { BACKEND_NAME: B, BACKEND_PORT: 9001 }
+    volumes: ['./backend/dev:/app/dev:ro']
+    networks: [app-net]
+
+  proxy:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PROXY_PORT: 8080
+      ADMIN_PORT: 3000
+      BACKEND_A_URL: http://backend-a1:9001,http://backend-a2:9001
+      BACKEND_B_URL: http://backend-b:9001
+      DATABASE_URL: postgres://dwarpal:dwarpal@postgres:5432/dwarpal
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '8080:8080'
+      - '3000:3000'
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    stop_grace_period: 30s # let in-flight requests drain on SIGTERM
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/healthz']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - edge-net
+      - app-net
+
+  dashboard:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '5173:80'
+    depends_on:
+      - proxy
+    networks:
+      - edge-net
+
+volumes:
+  pgdata:
