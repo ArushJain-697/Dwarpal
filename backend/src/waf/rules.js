@@ -17,7 +17,9 @@ export const RULES = [
   // Cross-site scripting
   { id: 'xss-script-tag', category: 'xss', score: 5, pattern: /<\s*script/i },
   { id: 'xss-event-handler', category: 'xss', score: 3, pattern: /on\w+\s*=/i },
-  { id: 'xss-js-uri', category: 'xss', score: 4, pattern: /javascript:/i },
+  // a tag carrying an event handler, e.g. <img src=x onerror=...> — strong signal
+  { id: 'xss-tag-event', category: 'xss', score: 5, pattern: /<[a-z][^>]*\son[a-z]+\s*=/i },
+  { id: 'xss-js-uri', category: 'xss', score: 5, pattern: /javascript:/i },
 
   // Path traversal
   { id: 'traversal-dotdot', category: 'traversal', score: 5, pattern: /\.\.[\/\\]/ },

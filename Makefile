@@ -4,7 +4,7 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev web migrate seed demo curl-suite attack loadtest
+.PHONY: help init up down nuke logs ps dev web restart migrate seed demo curl-suite attack loadtest test
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -45,6 +45,9 @@ attack: ## Hammer the proxy with sqlmap
 loadtest: ## Load test the proxy with autocannon
 	docker compose run --rm attacker /attacks/loadtest.sh
 
+test: ## Run the backend test suite
+	cd backend && npm test
+
 logs: ## Tail logs from all services
 	docker compose logs -f
 
@@ -56,3 +59,6 @@ dev: ## Run the proxy locally (no containers) against localhost backends
 
 web: ## Run the dashboard dev server
 	cd frontend && npm run dev
+
+restart: ## Restart the proxy to pick up backend code edits (node --watch doesn't cross the bind mount)
+	docker compose restart proxy
