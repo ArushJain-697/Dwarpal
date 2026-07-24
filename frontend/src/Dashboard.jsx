@@ -9,60 +9,52 @@ export function Dashboard() {
   const { connected, stats, attacks, series } = useLiveStream();
 
   return (
-    <>
+    <div className="app">
       <div className="aurora" />
       <div className="grain" />
 
-      <div className="dashboard">
-        <header className="head rise" style={{ animationDelay: '0ms' }}>
-          <div>
-            <a
-              className="eyebrow"
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate('/');
-              }}
-              style={{ textDecoration: 'none', cursor: 'pointer' }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: connected ? 'var(--ok)' : 'var(--sqli)',
-                  display: 'inline-block',
-                }}
-              />
-              live threat monitor
-            </a>
-            <div className="wordmark">Dwarpal</div>
-            <p className="tagline">reverse proxy &amp; web application firewall</p>
-          </div>
+      <header className="topbar">
+        <a
+          className="tb-brand"
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/');
+          }}
+        >
+          <span className="tb-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffe17c" stroke="#ffe17c" strokeWidth="1.5" strokeLinejoin="round">
+              <path d="M12 3 4 6v5c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-3Z" />
+            </svg>
+          </span>
+          Dwarpal
+          <span className="tb-sub">Threat Monitor</span>
+        </a>
+        <div className="tb-right">
+          <span className={`live ${connected ? 'on' : 'off'}`}>
+            <span className="live-dot" />
+            {connected ? 'Live' : 'Reconnecting'}
+          </span>
+        </div>
+      </header>
 
-          <div className={`status ${connected ? 'live' : 'offline'}`}>
-            <span className="dot" />
-            {connected ? 'connected' : 'reconnecting'}
-          </div>
-        </header>
+      <main className="main">
+        <div className="main-head">
+          <h1>Overview</h1>
+          <div className="sub">Real-time traffic across the proxy edge</div>
+        </div>
 
-        <div className="rise" style={{ animationDelay: '80ms' }}>
+        <div className="enter">
           <StatsBar stats={stats} />
         </div>
-
-        <div className="rise" style={{ animationDelay: '160ms' }}>
+        <div className="enter" style={{ animationDelay: '60ms', marginTop: 20 }}>
           <RpsChart series={series} />
         </div>
-
-        <div className="panels">
-          <div className="rise" style={{ animationDelay: '240ms' }}>
-            <AttackFeed attacks={attacks} />
-          </div>
-          <div className="rise" style={{ animationDelay: '320ms' }}>
-            <CategoryBreakdown stats={stats} />
-          </div>
+        <div className="panels enter" style={{ animationDelay: '120ms', marginTop: 20 }}>
+          <AttackFeed attacks={attacks} />
+          <CategoryBreakdown stats={stats} />
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }

@@ -1,12 +1,9 @@
 /**
- * AttackFeed — the live attack event feed.
+ * AttackFeed — the live attack feed as a data table.
  *
- * Each blocked / rate-limited request is a row: timestamp, category pill,
- * method + path, client IP, status code. Newest on top.
- *
- * Every attacker-controlled string (paths, IPs) is rendered through React's
- * auto-escaping — never dangerouslySetInnerHTML — so a payload logged into our
- * own feed can't run in the admin's browser.
+ * Columns: time, threat category, request, source IP, status. Newest on top.
+ * Attacker-controlled strings (paths, IPs) render through React's auto-escaping
+ * — never dangerouslySetInnerHTML.
  */
 
 function time(ts) {
@@ -35,19 +32,28 @@ export function AttackFeed({ attacks }) {
             No attacks yet — run <code>make curl-suite</code> to fire test payloads
           </div>
         ) : (
-          <div className="feed">
-            {attacks.map((e, i) => (
-              <div className="row" key={e.id || i}>
-                <span className="t">{time(e.ts)}</span>
-                <Badge decision={e.decision} category={e.category} />
-                <span className="path" title={`${e.method} ${e.path}`}>
-                  {e.method} {e.path}
-                </span>
-                <span className="ip">{e.clientIp}</span>
-                <span className={`code c${e.status}`}>{e.status}</span>
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="thead">
+              <span>Time</span>
+              <span>Threat</span>
+              <span>Request</span>
+              <span className="r ip-h">Source</span>
+              <span className="r">Status</span>
+            </div>
+            <div className="tbody">
+              {attacks.map((e, i) => (
+                <div className="trow" key={e.id || i}>
+                  <span className="t">{time(e.ts)}</span>
+                  <Badge decision={e.decision} category={e.category} />
+                  <span className="path" title={`${e.method} ${e.path}`}>
+                    {e.method} {e.path}
+                  </span>
+                  <span className="ip">{e.clientIp}</span>
+                  <span className={`code c${e.status}`}>{e.status}</span>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
