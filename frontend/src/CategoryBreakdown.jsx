@@ -40,11 +40,7 @@ export function CategoryBreakdown({ stats }) {
                 <div className="cat-track">
                   <div
                     className="cat-fill"
-                    style={{
-                      width: `${pct}%`,
-                      background: color,
-                      boxShadow: `0 0 12px ${color}`,
-                    }}
+                    style={{ width: `${pct}%`, background: color }}
                   />
                 </div>
               </div>

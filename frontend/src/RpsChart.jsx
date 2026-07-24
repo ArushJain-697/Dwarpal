@@ -53,22 +53,12 @@ export function RpsChart({ series }) {
             </div>
           ) : (
             <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#34d399" />
-                </linearGradient>
-                <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(139,92,246,0.28)" />
-                  <stop offset="100%" stopColor="rgba(139,92,246,0)" />
-                </linearGradient>
-              </defs>
-              <path d={area} fill="url(#fill)" />
+              <path d={area} fill="var(--sage)" fillOpacity="0.55" />
               <path
                 d={total}
                 fill="none"
-                stroke="url(#line)"
-                strokeWidth="2.25"
+                stroke="var(--charcoal)"
+                strokeWidth="2.75"
                 strokeLinejoin="round"
                 strokeLinecap="round"
               />
@@ -76,17 +66,16 @@ export function RpsChart({ series }) {
                 d={blocked}
                 fill="none"
                 stroke="var(--sqli)"
-                strokeWidth="1.75"
+                strokeWidth="2.25"
                 strokeLinejoin="round"
                 strokeLinecap="round"
-                opacity="0.9"
               />
             </svg>
           )}
 
           <div className="legend">
             <span>
-              <i style={{ background: 'linear-gradient(90deg,#8b5cf6,#34d399)' }} />
+              <i style={{ background: 'var(--charcoal)' }} />
               total
             </span>
             <span>
