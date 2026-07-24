@@ -44,6 +44,10 @@ function toList(value, name) {
   return list;
 }
 
+// The valid WAF modes — the single source of truth for env validation, the
+// admin API, and the runtime setter.
+export const WAF_MODES = ['off', 'detect', 'block'];
+
 function loadConfig(env = process.env) {
   const config = {
     // ports
@@ -55,7 +59,7 @@ function loadConfig(env = process.env) {
     backendBPool: toList(env.BACKEND_B_URL ?? 'http://localhost:9002', 'BACKEND_B_URL'),
 
     // WAF behaviour: off = don't inspect, detect = log only, block = 403
-    wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', ['off', 'detect', 'block']),
+    wafMode: oneOf(env.WAF_MODE ?? 'block', 'WAF_MODE', WAF_MODES),
     // anomaly score at which a request is blocked
     wafThreshold: toInt(env.WAF_THRESHOLD ?? '5', 'WAF_THRESHOLD'),
 

@@ -7,6 +7,7 @@
  */
 
 import { pickTarget } from '../proxy/balancer.js';
+import { shortCircuit } from '../core/verdict.js';
 
 export const loadbalanceStage = {
   name: 'loadbalance',
@@ -14,14 +15,7 @@ export const loadbalanceStage = {
     const target = pickTarget(ctx.route);
 
     if (!target) {
-      return {
-        type: 'short_circuit',
-        response: {
-          status: 503,
-          headers: { 'content-type': 'text/plain' },
-          body: `dwarpal: no upstream available (id ${ctx.id})\n`,
-        },
-      };
+      return shortCircuit(ctx, 503, 'no upstream available');
     }
 
     ctx.upstream = target;

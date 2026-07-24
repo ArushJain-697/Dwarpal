@@ -28,7 +28,6 @@ export function createPipeline(stages, finalize) {
         for (const stage of stages) {
           const verdict = await stage.handle(ctx);
           if (verdict && verdict.type !== 'continue') {
-            ctx.verdict = verdict;
             writeVerdict(ctx, verdict);
             break;
           }

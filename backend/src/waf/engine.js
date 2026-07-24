@@ -5,6 +5,10 @@
  * matches into an anomaly score. The request is flagged when the score reaches
  * the threshold — so one strong signature blocks alone, while several weak ones
  * add up, and a single weak signal does not.
+ *
+ * A rule matches either by regex (`pattern`) or by a predicate (`match`) — the
+ * predicate form lets rules that need real parsing (e.g. SSRF address checks)
+ * live in the same ruleset instead of being special-cased in the stage.
  */
 
 import { RULES } from './rules.js';
@@ -17,7 +21,8 @@ export function evaluate(fields, threshold) {
   for (const field of fields) {
     const value = canonicalize(field.value);
     for (const rule of RULES) {
-      if (rule.pattern.test(value)) {
+      const matched = rule.match ? rule.match(value) : rule.pattern.test(value);
+      if (matched) {
         score += rule.score;
         hits.push({
           id: rule.id,

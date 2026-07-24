@@ -16,21 +16,10 @@ import { config } from '../config/env.js';
 import { getWafMode } from '../config/settings.js';
 import { evaluate } from '../waf/engine.js';
 import { collectFields } from '../waf/fields.js';
-import { isBlockedAddress, extractUrlHost } from '../waf/ssrf.js';
+import { shortCircuit } from '../core/verdict.js';
 
 function topHit(hits) {
   return hits.reduce((best, h) => (h.score > best.score ? h : best));
-}
-
-// Look for a query param that is a URL pointing at an internal address.
-function scanSsrf(ctx) {
-  for (const [key, value] of ctx.query) {
-    const host = extractUrlHost(value);
-    if (host && isBlockedAddress(host)) {
-      return { id: 'ssrf-internal-target', category: 'ssrf', score: 5, source: `query:${key}` };
-    }
-  }
-  return null;
 }
 
 export const wafStage = {
@@ -42,25 +31,16 @@ export const wafStage = {
     }
 
     const result = evaluate(collectFields(ctx), config.wafThreshold);
-    const hits = [...result.hits];
-    let score = result.score;
-
-    const ssrf = scanSsrf(ctx);
-    if (ssrf) {
-      hits.push(ssrf);
-      score += ssrf.score;
-    }
-
-    if (hits.length === 0) {
+    if (result.hits.length === 0) {
       return { type: 'continue' };
     }
 
-    const top = topHit(hits);
-    const blocking = mode === 'block' && score >= config.wafThreshold;
+    const top = topHit(result.hits);
+    const blocking = mode === 'block' && result.blocked;
 
     ctx.waf = {
       blocked: blocking,
-      anomaly: score,
+      anomaly: result.score,
       ruleId: top.id,
       category: top.category,
       source: top.source,
@@ -70,22 +50,11 @@ export const wafStage = {
     if (blocking || mode === 'detect') {
       const label = blocking ? 'blocked' : 'detected';
       console.log(
-        `[waf] ${label} ${ctx.method} ${ctx.path} anomaly=${score} category=${top.category} in=${top.source} id=${ctx.id}`,
+        `[waf] ${label} ${ctx.method} ${ctx.path} anomaly=${result.score} category=${top.category} in=${top.source} id=${ctx.id}`,
       );
     }
 
-    if (!blocking) {
-      return { type: 'continue' };
-    }
-
-    return {
-      type: 'short_circuit',
-      response: {
-        status: 403,
-        headers: { 'content-type': 'text/plain' },
-        // Don't echo the payload or the matched rule back to the client.
-        body: `dwarpal: request blocked (id ${ctx.id})\n`,
-      },
-    };
+    // Don't echo the payload or matched rule back — only the request id.
+    return blocking ? shortCircuit(ctx, 403, 'request blocked') : { type: 'continue' };
   },
 };

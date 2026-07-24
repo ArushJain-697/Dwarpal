@@ -47,12 +47,14 @@ export function isBlockedAddress(host) {
   return v4 ? isPrivateV4(v4) : false;
 }
 
-// If a value is a URL, return its hostname, else null.
-export function extractUrlHost(value) {
-  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return null;
-  try {
-    return new URL(value).hostname;
-  } catch {
-    return null;
+// Does any URL inside this value point at an internal / blocked address? Scans
+// the whole field (path, query, or header), so an internal target hidden
+// anywhere in the request is caught, not just a bare query param.
+export function containsBlockedAddress(value) {
+  const re = /[a-z][a-z0-9+.-]*:\/\/([^/:?#\s&]+)/gi;
+  let m;
+  while ((m = re.exec(value)) !== null) {
+    if (isBlockedAddress(m[1])) return true;
   }
+  return false;
 }

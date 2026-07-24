@@ -6,7 +6,11 @@
  * their own; weaker heuristics score low so they only contribute — several
  * together cross the threshold, one alone does not. This is what keeps benign
  * lookalikes (a stray `--`, the word "union") from tripping the WAF.
+ *
+ * A rule matches by regex (`pattern`) or by predicate (`match`).
  */
+
+import { containsBlockedAddress } from './ssrf.js';
 
 export const RULES = [
   // SQL injection
@@ -35,6 +39,7 @@ export const RULES = [
     pattern: /[;|&]\s*(cat|ls|id|whoami|curl|wget|nc|bash|sh|ping|uname)\b/i,
   },
 
-  // SSRF
-  { id: 'ssrf-metadata-ip', category: 'ssrf', score: 5, pattern: /169\.254\.169\.254/ },
+  // SSRF — a URL anywhere in the request pointing at an internal / metadata
+  // address (checks dotted / decimal / hex forms via isBlockedAddress).
+  { id: 'ssrf-internal-target', category: 'ssrf', score: 5, match: containsBlockedAddress },
 ];

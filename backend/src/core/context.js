@@ -24,8 +24,5 @@ export function createContext(req, res) {
     rawQuery: url.search, // the raw, still-encoded "?..." — used by the WAF
     headers: req.headers,
     clientIp: req.socket.remoteAddress,
-
-    // filled in by stages as the request flows through
-    verdict: undefined,
   };
 }

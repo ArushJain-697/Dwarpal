@@ -32,7 +32,7 @@ function randomIp() {
 }
 
 function ruleFor(category) {
-  return { sqli: 'sqli-union', xss: 'xss-script-tag', traversal: 'traversal-dotdot', cmdi: 'cmdi-chained-cmd', ssrf: 'ssrf-metadata-ip' }[category];
+  return { sqli: 'sqli-union', xss: 'xss-script-tag', traversal: 'traversal-dotdot', cmdi: 'cmdi-chained-cmd', ssrf: 'ssrf-internal-target' }[category];
 }
 
 function makeRow(ts, decision, category = null) {

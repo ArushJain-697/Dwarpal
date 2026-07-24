@@ -33,13 +33,8 @@ const COLUMNS = [
 
 let pool = null;
 let buffer = [];
-let dropped = 0;
 let flushing = false;
 let timer = null;
-
-export function getDropped() {
-  return dropped;
-}
 
 function normalizeIp(ip) {
   if (!ip) return null;
@@ -89,7 +84,6 @@ async function flush() {
     await insertBatch(batch);
   } catch (err) {
     // Never let a DB problem reach the hot path — drop and keep serving.
-    dropped += batch.length;
     console.error(`[logwriter] flush failed, dropped ${batch.length}: ${err.message}`);
   } finally {
     flushing = false;
@@ -100,8 +94,7 @@ export function enqueue(record) {
   if (!pool) return; // no database configured — logs stay console-only
 
   if (buffer.length >= config.logBufferMax) {
-    buffer.shift(); // drop oldest under overload
-    dropped += 1;
+    buffer.shift(); // drop oldest under overload (load shedding)
   }
   buffer.push(record);
 

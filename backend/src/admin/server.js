@@ -7,15 +7,13 @@
  */
 
 import http from 'node:http';
-import { config } from '../config/env.js';
+import { config, WAF_MODES } from '../config/env.js';
 import { snapshot } from '../obs/metrics.js';
 import { getRecent } from '../obs/recentLog.js';
 import { queryLogs } from '../db/logsQuery.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
 import { publishConfig } from '../redis/pubsub.js';
 import { attachWebSocket } from './ws.js';
-
-const WAF_MODES = ['off', 'detect', 'block'];
 
 function sendJson(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json' });

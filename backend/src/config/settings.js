@@ -7,7 +7,7 @@
  * every request, so a change takes effect immediately — no restart.
  */
 
-import { config } from './env.js';
+import { config, WAF_MODES } from './env.js';
 
 const state = {
   wafMode: config.wafMode,
@@ -17,6 +17,10 @@ export function getWafMode() {
   return state.wafMode;
 }
 
+// The setter owns the invariant, so every writer (admin PUT, pubsub reload) is
+// safe by construction and an invalid mode is simply ignored.
 export function setWafMode(mode) {
-  state.wafMode = mode;
+  if (WAF_MODES.includes(mode)) {
+    state.wafMode = mode;
+  }
 }

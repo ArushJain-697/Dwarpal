@@ -10,6 +10,7 @@
  */
 
 import { config } from '../config/env.js';
+import { shortCircuit } from '../core/verdict.js';
 
 const ALLOWED_METHODS = new Set([
   'GET',
@@ -21,24 +22,13 @@ const ALLOWED_METHODS = new Set([
   'OPTIONS',
 ]);
 
-function reject(ctx, status, message) {
-  return {
-    type: 'short_circuit',
-    response: {
-      status,
-      headers: { 'content-type': 'text/plain' },
-      body: `dwarpal: ${message} (id ${ctx.id})\n`,
-    },
-  };
-}
-
 export const ingestStage = {
   name: 'ingest',
   handle(ctx) {
     const { req } = ctx;
 
     if (!ALLOWED_METHODS.has(ctx.method)) {
-      return reject(ctx, 405, 'method not allowed');
+      return shortCircuit(ctx, 405, 'method not allowed');
     }
 
     // Conflicting framing is the classic request-smuggling vector — reject it
@@ -47,12 +37,12 @@ export const ingestStage = {
       req.headers['content-length'] !== undefined &&
       req.headers['transfer-encoding'] !== undefined
     ) {
-      return reject(ctx, 400, 'bad request');
+      return shortCircuit(ctx, 400, 'bad request');
     }
 
     // rawHeaders is a flat [name, value, name, value, ...] array.
     if (req.rawHeaders.length / 2 > config.maxHeaderCount) {
-      return reject(ctx, 431, 'too many headers');
+      return shortCircuit(ctx, 431, 'too many headers');
     }
 
     return { type: 'continue' };

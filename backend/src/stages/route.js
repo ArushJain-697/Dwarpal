@@ -6,6 +6,7 @@
  */
 
 import { matchRoute } from '../proxy/router.js';
+import { shortCircuit } from '../core/verdict.js';
 
 export const routeStage = {
   name: 'route',
@@ -13,14 +14,7 @@ export const routeStage = {
     const route = matchRoute(ctx.path);
 
     if (!route) {
-      return {
-        type: 'short_circuit',
-        response: {
-          status: 404,
-          headers: { 'content-type': 'text/plain' },
-          body: `dwarpal: no route (id ${ctx.id})\n`,
-        },
-      };
+      return shortCircuit(ctx, 404, 'no route');
     }
 
     ctx.route = route;

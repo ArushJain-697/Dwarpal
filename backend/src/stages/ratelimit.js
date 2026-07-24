@@ -7,6 +7,7 @@
  */
 
 import { take } from '../ratelimit/limiter.js';
+import { shortCircuit } from '../core/verdict.js';
 
 export const ratelimitStage = {
   name: 'ratelimit',
@@ -15,19 +16,11 @@ export const ratelimitStage = {
     ctx.rateLimit = { remaining: result.remaining, limited: !result.allowed };
 
     if (!result.allowed) {
-      return {
-        type: 'short_circuit',
-        response: {
-          status: 429,
-          headers: {
-            'content-type': 'text/plain',
-            'retry-after': String(result.retryAfterSec),
-            'ratelimit-limit': String(result.limit),
-            'ratelimit-remaining': '0',
-          },
-          body: `dwarpal: rate limited (id ${ctx.id})\n`,
-        },
-      };
+      return shortCircuit(ctx, 429, 'rate limited', {
+        'retry-after': String(result.retryAfterSec),
+        'ratelimit-limit': String(result.limit),
+        'ratelimit-remaining': '0',
+      });
     }
 
     return { type: 'continue' };
