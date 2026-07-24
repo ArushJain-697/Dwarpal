@@ -1,22 +1,22 @@
 /**
  * RpsChart — requests/sec over time, total vs blocked.
  *
- * A lightweight hand-rolled SVG line chart (no chart library). The green line
- * is total throughput, the red line is blocked-per-second; the gap between them
- * reads as "still serving traffic while under attack". Points are capped by the
- * hook, and there's no animation, so it stays cheap under load.
+ * A hand-rolled SVG line chart (no chart library): a gradient-stroked total line
+ * with a soft area fill, and a blocked line beneath. The gap between them reads
+ * as "still serving traffic while under attack". Points are capped by the hook
+ * and there's no animation, so it stays cheap under load.
  */
 
-const W = 600;
-const H = 150;
-const PAD = 10;
+const W = 640;
+const H = 168;
+const PAD = 12;
 
-function buildPath(points, accessor, maxY) {
+function path(points, accessor, maxY) {
   if (points.length === 0) return '';
-  const stepX = (W - 2 * PAD) / Math.max(1, points.length - 1);
+  const step = (W - 2 * PAD) / Math.max(1, points.length - 1);
   return points
     .map((p, i) => {
-      const x = PAD + i * stepX;
+      const x = PAD + i * step;
       const y = H - PAD - (accessor(p) / maxY) * (H - 2 * PAD);
       return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
     })
@@ -27,57 +27,75 @@ export function RpsChart({ series }) {
   const current = series.length ? series[series.length - 1] : null;
   const maxY = Math.max(1, ...series.map((p) => p.rps));
 
-  const totalPath = buildPath(series, (p) => p.rps, maxY);
-  const blockedPath = buildPath(series, (p) => p.blockedRps, maxY);
-  const areaPath = totalPath
-    ? `${totalPath} L${(W - PAD).toFixed(1)},${H - PAD} L${PAD},${H - PAD} Z`
-    : '';
+  const total = path(series, (p) => p.rps, maxY);
+  const blocked = path(series, (p) => p.blockedRps, maxY);
+  const area = total ? `${total} L${W - PAD},${H - PAD} L${PAD},${H - PAD} Z` : '';
 
   return (
-    <div className="card" style={{ marginBottom: 20 }}>
-      <div className="card-header">
-        <span>Requests / sec</span>
-        <span className="count">
-          <span style={{ color: 'var(--green)' }}>{current ? current.rps.toFixed(1) : '0'}</span>
-          {' rps · '}
-          <span style={{ color: 'var(--red)' }}>
-            {current ? current.blockedRps.toFixed(1) : '0'}
+    <div className="card">
+      <div className="card-core">
+        <div className="card-head">
+          <h2>Requests / sec</h2>
+          <span className="meta">
+            <span style={{ color: 'var(--ok)' }}>{current ? current.rps.toFixed(1) : '0.0'}</span>
+            {' total · '}
+            <span style={{ color: 'var(--sqli)' }}>
+              {current ? current.blockedRps.toFixed(1) : '0.0'}
+            </span>
+            {' blocked'}
           </span>
-          {' blocked'}
-        </span>
-      </div>
+        </div>
 
-      <div style={{ padding: 16 }}>
-        {series.length < 2 ? (
-          <div className="empty-state" style={{ padding: '40px 0' }}>
-            collecting live traffic…
+        <div className="chart-wrap">
+          {series.length < 2 ? (
+            <div className="empty" style={{ padding: '52px 0' }}>
+              collecting live traffic…
+            </div>
+          ) : (
+            <svg className="chart-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#34d399" />
+                </linearGradient>
+                <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="rgba(139,92,246,0.28)" />
+                  <stop offset="100%" stopColor="rgba(139,92,246,0)" />
+                </linearGradient>
+              </defs>
+              <path d={area} fill="url(#fill)" />
+              <path
+                d={total}
+                fill="none"
+                stroke="url(#line)"
+                strokeWidth="2.25"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              <path
+                d={blocked}
+                fill="none"
+                stroke="var(--sqli)"
+                strokeWidth="1.75"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity="0.9"
+              />
+            </svg>
+          )}
+
+          <div className="legend">
+            <span>
+              <i style={{ background: 'linear-gradient(90deg,#8b5cf6,#34d399)' }} />
+              total
+            </span>
+            <span>
+              <i style={{ background: 'var(--sqli)' }} />
+              blocked
+            </span>
           </div>
-        ) : (
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="none"
-            style={{ width: '100%', height: 150, display: 'block' }}
-          >
-            <path d={areaPath} fill="var(--green-dim)" />
-            <path d={totalPath} fill="none" stroke="var(--green)" strokeWidth="2" />
-            <path d={blockedPath} fill="none" stroke="var(--red)" strokeWidth="2" />
-          </svg>
-        )}
-
-        <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 12 }}>
-          <Legend color="var(--green)" label="total" />
-          <Legend color="var(--red)" label="blocked" />
         </div>
       </div>
     </div>
-  );
-}
-
-function Legend({ color, label }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)' }}>
-      <span style={{ width: 12, height: 3, borderRadius: 2, background: color }} />
-      {label}
-    </span>
   );
 }

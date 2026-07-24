@@ -1,42 +1,36 @@
 /**
- * StatsBar — the summary counters at the top of the dashboard.
+ * StatsBar — four double-bezel glass stat cards.
  *
- * Shows total requests, blocked attacks, rate-limited, and current rps.
- * Each counter is a colored card. Numbers use monospace for alignment.
+ * Total requests, blocked, rate-limited, and current rps. Numbers are tabular
+ * monospace so they don't jitter as they tick.
  */
 
-export function StatsBar({ stats }) {
-  if (!stats) {
-    return (
-      <div className="stats-bar">
-        {['Requests', 'Blocked', 'Rate limited', 'RPS'].map((label) => (
-          <div className="stat-card" key={label}>
-            <div className="stat-label">{label}</div>
-            <div className="stat-value" style={{ color: 'var(--text-muted)' }}>—</div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+const CARDS = [
+  { key: 'requestsTotal', label: 'Requests', tone: 'violet', dot: 'var(--accent)' },
+  { key: 'blocksTotal', label: 'Blocked', tone: 'rose', dot: 'var(--sqli)' },
+  { key: 'rateLimitedTotal', label: 'Rate limited', tone: 'amber', dot: 'var(--xss)' },
+  { key: 'rps', label: 'Req / sec', tone: 'emerald', dot: 'var(--ok)' },
+];
 
+function format(value) {
+  if (value === undefined || value === null) return '—';
+  return typeof value === 'number' && Number.isInteger(value)
+    ? value.toLocaleString()
+    : String(value);
+}
+
+export function StatsBar({ stats }) {
   return (
-    <div className="stats-bar">
-      <div className="stat-card">
-        <div className="stat-label">Requests</div>
-        <div className="stat-value blue">{stats.requestsTotal.toLocaleString()}</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-label">Blocked</div>
-        <div className="stat-value red">{stats.blocksTotal.toLocaleString()}</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-label">Rate limited</div>
-        <div className="stat-value amber">{stats.rateLimitedTotal.toLocaleString()}</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-label">RPS</div>
-        <div className="stat-value green">{stats.rps}</div>
-      </div>
+    <div className="stats">
+      {CARDS.map(({ key, label, tone, dot }) => (
+        <div className="stat" key={key}>
+          <span className="stat-spark" style={{ background: dot }} />
+          <div className="stat-core">
+            <div className="stat-label">{label}</div>
+            <div className={`stat-num ${tone}`}>{format(stats?.[key])}</div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

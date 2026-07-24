@@ -25,7 +25,19 @@ export function useLiveStream() {
 
   function pushAttacks(items) {
     if (!items || items.length === 0) return;
-    setAttacks((prev) => [...items, ...prev].slice(0, MAX_ATTACKS));
+    setAttacks((prev) => {
+      // The backfill and the live feed overlap, so dedupe by id across the whole
+      // merged list (newest first) — otherwise duplicate keys make React omit rows.
+      const seen = new Set();
+      const out = [];
+      for (const a of [...items, ...prev]) {
+        if (a.id && seen.has(a.id)) continue;
+        if (a.id) seen.add(a.id);
+        out.push(a);
+        if (out.length >= MAX_ATTACKS) break;
+      }
+      return out;
+    });
   }
 
   async function backfill() {

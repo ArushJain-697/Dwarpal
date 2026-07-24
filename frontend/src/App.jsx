@@ -9,23 +9,53 @@ export function App() {
   const { connected, stats, attacks, series } = useLiveStream();
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h1>
-          Dwarpal
-          <span className={`connection-dot ${connected ? 'live' : 'offline'}`} />
-        </h1>
-        <span className="tagline">reverse proxy + web application firewall</span>
+    <>
+      <div className="aurora" />
+      <div className="grain" />
+
+      <div className="dashboard">
+        <header className="head rise" style={{ animationDelay: '0ms' }}>
+          <div>
+            <span className="eyebrow">
+              <span
+                className="dot"
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: connected ? 'var(--ok)' : 'var(--sqli)',
+                  display: 'inline-block',
+                }}
+              />
+              live threat monitor
+            </span>
+            <div className="wordmark">Dwarpal</div>
+            <p className="tagline">reverse proxy &amp; web application firewall</p>
+          </div>
+
+          <div className={`status ${connected ? 'live' : 'offline'}`}>
+            <span className="dot" />
+            {connected ? 'connected' : 'reconnecting'}
+          </div>
+        </header>
+
+        <div className="rise" style={{ animationDelay: '80ms' }}>
+          <StatsBar stats={stats} />
+        </div>
+
+        <div className="rise" style={{ animationDelay: '160ms' }}>
+          <RpsChart series={series} />
+        </div>
+
+        <div className="panels">
+          <div className="rise" style={{ animationDelay: '240ms' }}>
+            <AttackFeed attacks={attacks} />
+          </div>
+          <div className="rise" style={{ animationDelay: '320ms' }}>
+            <CategoryBreakdown stats={stats} />
+          </div>
+        </div>
       </div>
-
-      <StatsBar stats={stats} />
-
-      <RpsChart series={series} />
-
-      <div className="panels" style={{ gridTemplateColumns: '1fr 320px' }}>
-        <AttackFeed attacks={attacks} />
-        <CategoryBreakdown stats={stats} />
-      </div>
-    </div>
+    </>
   );
 }

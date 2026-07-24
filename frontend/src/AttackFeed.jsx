@@ -1,64 +1,55 @@
 /**
  * AttackFeed — the live attack event feed.
  *
- * Renders each blocked/rate-limited request as a row with a timestamp, method,
- * path, category badge, and status code. Newest events appear at the top.
+ * Each blocked / rate-limited request is a row: timestamp, category pill,
+ * method + path, client IP, status code. Newest on top.
  *
- * All attacker-controlled strings (paths, user-agents) are rendered through
- * React's auto-escaping — never dangerouslySetInnerHTML — to prevent
- * stored-XSS-via-our-own-logs from reaching the admin session.
+ * Every attacker-controlled string (paths, IPs) is rendered through React's
+ * auto-escaping — never dangerouslySetInnerHTML — so a payload logged into our
+ * own feed can't run in the admin's browser.
  */
 
-function formatTime(ts) {
+function time(ts) {
   const d = new Date(ts);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
 function Badge({ decision, category }) {
-  if (decision === 'ratelimit') {
-    return <span className="badge badge-ratelimit">429</span>;
-  }
-  if (!category) {
-    return <span className="badge badge-sqli">block</span>;
-  }
-  const cls = `badge badge-${category}`;
-  return <span className={cls}>{category}</span>;
+  if (decision === 'ratelimit') return <span className="badge b-ratelimit">429</span>;
+  const cat = category || 'sqli';
+  return <span className={`badge b-${cat}`}>{category || 'block'}</span>;
 }
 
 export function AttackFeed({ attacks }) {
   return (
     <div className="card">
-      <div className="card-header">
-        <span>Live Attack Feed</span>
-        <span className="count">{attacks.length} events</span>
-      </div>
+      <div className="card-core">
+        <div className="card-head">
+          <h2>Live attack feed</h2>
+          <span className="meta">{attacks.length} events</span>
+        </div>
 
-      {attacks.length === 0 ? (
-        <div className="empty-state">
-          No attacks detected yet — run <code>make curl-suite</code> to fire test payloads
-        </div>
-      ) : (
-        <div className="feed-list">
-          {attacks.map((event, i) => (
-            <div className="feed-row" key={event.id || i}>
-              <span className="feed-time">{formatTime(event.ts)}</span>
-              <Badge decision={event.decision} category={event.category} />
-              <span className="feed-path" title={event.path}>
-                {event.method} {event.path}
-              </span>
-              <span className="feed-path" style={{ textAlign: 'right' }}>
-                {event.clientIp}
-              </span>
-              <span className={`feed-status s${event.status}`}>
-                {event.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+        {attacks.length === 0 ? (
+          <div className="empty">
+            No attacks yet — run <code>make curl-suite</code> to fire test payloads
+          </div>
+        ) : (
+          <div className="feed">
+            {attacks.map((e, i) => (
+              <div className="row" key={e.id || i}>
+                <span className="t">{time(e.ts)}</span>
+                <Badge decision={e.decision} category={e.category} />
+                <span className="path" title={`${e.method} ${e.path}`}>
+                  {e.method} {e.path}
+                </span>
+                <span className="ip">{e.clientIp}</span>
+                <span className={`code c${e.status}`}>{e.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
