@@ -4,15 +4,15 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev migrate seed
+.PHONY: help init up down nuke logs ps dev web migrate seed
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-init: ## Create .env from .env.example if it doesn't exist
-	@test -f .env || cp .env.example .env
-	@echo ".env ready"
+init: ## Create backend/.env from the example if it doesn't exist
+	@test -f backend/.env || cp backend/.env.example backend/.env
+	@echo "backend/.env ready"
 
 up: ## Build and start the full stack (detached)
 	docker compose up -d --build
@@ -36,4 +36,7 @@ ps: ## Show container status
 	docker compose ps
 
 dev: ## Run the proxy locally (no containers) against localhost backends
-	node --watch src/index.js
+	cd backend && node --watch src/index.js
+
+web: ## Run the dashboard dev server
+	cd frontend && npm run dev

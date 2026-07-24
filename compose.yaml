@@ -44,7 +44,7 @@ services:
       BACKEND_NAME: A1
       BACKEND_PORT: 9001
     volumes:
-      - ./dev:/app/dev:ro
+      - ./backend/dev:/app/dev:ro
     networks:
       - app-net
     healthcheck:
@@ -61,7 +61,7 @@ services:
       BACKEND_NAME: A2
       BACKEND_PORT: 9001
     volumes:
-      - ./dev:/app/dev:ro
+      - ./backend/dev:/app/dev:ro
     networks:
       - app-net
     healthcheck:
@@ -78,7 +78,7 @@ services:
       BACKEND_NAME: B
       BACKEND_PORT: 9001
     volumes:
-      - ./dev:/app/dev:ro
+      - ./backend/dev:/app/dev:ro
     networks:
       - app-net
     healthcheck:
@@ -89,7 +89,7 @@ services:
 
   proxy:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.dev
     command: node --watch src/index.js
     environment:
@@ -103,7 +103,7 @@ services:
       - '8080:8080'
       - '3000:3000'
     volumes:
-      - .:/app
+      - ./backend:/app
       - /app/node_modules # keep the image's node_modules
     depends_on:
       postgres:
