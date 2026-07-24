@@ -32,6 +32,10 @@ function urlDecodeTwice(value) {
 export function canonicalize(value) {
   let v = urlDecodeTwice(value);
 
+  // In a query string '+' encodes a space (form-encoding). Fold it so a payload
+  // hidden behind '+' separators (e.g. 1'+OR+'1'='1) can't slip past the rules.
+  v = v.replace(/\+/g, ' ');
+
   // Fold Unicode look-alikes (fullwidth, compatibility forms) to ASCII.
   v = v.normalize('NFKC');
 

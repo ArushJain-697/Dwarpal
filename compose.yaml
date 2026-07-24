@@ -130,3 +130,11 @@ services:
       - proxy
     networks:
       - edge-net # static assets; the browser talks to the admin port directly
+
+  attacker:
+    build: ./attacker
+    profiles: [tools] # not started by `up`; run on demand via `docker compose run`
+    depends_on:
+      - proxy
+    networks:
+      - edge-net # reaches the proxy by service name

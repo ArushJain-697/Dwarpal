@@ -4,7 +4,7 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev web migrate seed
+.PHONY: help init up down nuke logs ps dev web migrate seed demo curl-suite attack loadtest
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -28,6 +28,22 @@ migrate: ## Run database migrations (inside the proxy container)
 
 seed: ## Fill the database with ~24h of history + an attack spike
 	docker compose exec proxy node src/scripts/seed.js
+
+demo: ## Clean boot + migrate + seed, ready to demo
+	docker compose up -d --build
+	@echo "waiting for services to come up..."; sleep 8
+	docker compose exec proxy node src/db/migrate.js
+	docker compose exec proxy node src/scripts/seed.js
+	@echo "ready — open http://localhost:5173"
+
+curl-suite: ## Fire one crafted request per attack class (+ a benign 200)
+	docker compose run --rm attacker /attacks/curl-suite.sh
+
+attack: ## Hammer the proxy with sqlmap
+	docker compose run --rm attacker /attacks/sqlmap.sh
+
+loadtest: ## Load test the proxy with autocannon
+	docker compose run --rm attacker /attacks/loadtest.sh
 
 logs: ## Tail logs from all services
 	docker compose logs -f
