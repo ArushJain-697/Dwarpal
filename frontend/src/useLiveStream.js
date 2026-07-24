@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ADMIN_BASE, WS_URL } from './config.js';
 
 const MAX_ATTACKS = 500; // cap the client-side feed so it never grows unbounded
+const MAX_POINTS = 120; // rolling window for the rps chart
 
 /**
  * Connects to the proxy's live feed:
@@ -15,10 +16,12 @@ export function useLiveStream() {
   const [connected, setConnected] = useState(false);
   const [stats, setStats] = useState(null);
   const [attacks, setAttacks] = useState([]);
+  const [series, setSeries] = useState([]);
 
   const wsRef = useRef(null);
   const backoffRef = useRef(250);
   const closedRef = useRef(false);
+  const prevRef = useRef({ blocks: null, t: null }); // for deriving blocked-per-second
 
   function pushAttacks(items) {
     if (!items || items.length === 0) return;
@@ -56,6 +59,20 @@ export function useLiveStream() {
         if (frame.type === 'tick') {
           setStats(frame.stats);
           pushAttacks(frame.attacks);
+
+          // Derive blocked-per-second by diffing the cumulative block counter.
+          const now = Date.now();
+          const prev = prevRef.current;
+          let blockedRps = 0;
+          if (prev.blocks !== null) {
+            const dt = (now - prev.t) / 1000;
+            if (dt > 0) blockedRps = Math.max(0, (frame.stats.blocksTotal - prev.blocks) / dt);
+          }
+          prevRef.current = { blocks: frame.stats.blocksTotal, t: now };
+
+          setSeries((prevSeries) =>
+            [...prevSeries, { t: now, rps: frame.stats.rps, blockedRps }].slice(-MAX_POINTS),
+          );
         }
       };
 
@@ -78,5 +95,5 @@ export function useLiveStream() {
     };
   }, []);
 
-  return { connected, stats, attacks };
+  return { connected, stats, attacks, series };
 }

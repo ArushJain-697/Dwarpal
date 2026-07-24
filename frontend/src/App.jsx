@@ -1,11 +1,12 @@
 import './index.css';
 import { useLiveStream } from './useLiveStream.js';
 import { StatsBar } from './StatsBar.jsx';
+import { RpsChart } from './RpsChart.jsx';
 import { AttackFeed } from './AttackFeed.jsx';
 import { CategoryBreakdown } from './CategoryBreakdown.jsx';
 
 export function App() {
-  const { connected, stats, attacks } = useLiveStream();
+  const { connected, stats, attacks, series } = useLiveStream();
 
   return (
     <div className="dashboard">
@@ -18,6 +19,8 @@ export function App() {
       </div>
 
       <StatsBar stats={stats} />
+
+      <RpsChart series={series} />
 
       <div className="panels" style={{ gridTemplateColumns: '1fr 320px' }}>
         <AttackFeed attacks={attacks} />
