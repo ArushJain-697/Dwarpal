@@ -70,6 +70,11 @@ function Hero() {
         </div>
 
         <div className="mock">
+          <div className="sticker">
+            not on
+            <br />
+            my watch
+          </div>
           <div className="mock-bar">
             <i className="r" />
             <i className="y" />

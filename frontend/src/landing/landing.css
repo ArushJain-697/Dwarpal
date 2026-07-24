@@ -173,9 +173,23 @@
   font-size: clamp(48px, 7.4vw, 92px);
   margin: 26px 0 22px;
 }
+/* gatekeeper — solid word on a rotated highlighter swipe */
 .hero .stroke {
-  -webkit-text-stroke: 2px var(--ink);
-  color: transparent;
+  position: relative;
+  display: inline-block;
+  color: var(--ink);
+  z-index: 0;
+}
+.hero .stroke::before {
+  content: '';
+  position: absolute;
+  left: -0.06em;
+  right: -0.06em;
+  top: 0.16em;
+  bottom: 0.05em;
+  background: var(--sage);
+  transform: rotate(-2.2deg);
+  z-index: -1;
 }
 .hero p {
   font-size: 18px;
@@ -188,11 +202,37 @@
 
 /* browser mockup */
 .mock {
+  position: relative;
   background: var(--paper);
   border: 2px solid var(--ink);
   border-radius: 16px;
   box-shadow: var(--sh-xl);
-  overflow: hidden;
+}
+
+/* sassy rotated sticker poking off the mockup */
+.sticker {
+  position: absolute;
+  top: -26px;
+  right: 22px;
+  z-index: 4;
+  padding: 9px 15px;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  border-radius: 11px;
+  box-shadow: var(--sh);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-align: center;
+  transform: rotate(6deg);
+  animation: wiggle 3.2s ease-in-out infinite;
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(6deg); }
+  50% { transform: rotate(2.5deg); }
 }
 .mock-bar {
   display: flex;
@@ -201,6 +241,7 @@
   padding: 13px 16px;
   background: var(--ink);
   border-bottom: 2px solid var(--ink);
+  border-radius: 14px 14px 0 0;
 }
 .mock-bar i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.35); }
 .mock-bar .r { background: #ff5f57; }
