@@ -4,7 +4,7 @@
 # down, reset. Demo/attack targets get added as those pieces land.
 
 .DEFAULT_GOAL := help
-.PHONY: help init up down nuke logs ps dev web restart migrate seed demo curl-suite attack loadtest test
+.PHONY: help init try up down nuke logs ps dev web restart migrate seed demo curl-suite attack loadtest test
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -13,6 +13,17 @@ help: ## Show this help
 init: ## Create backend/.env from the example if it doesn't exist
 	@test -f backend/.env || cp backend/.env.example backend/.env
 	@echo "backend/.env ready"
+
+try: ## ⭐ One command to try it: build, boot, seed, and open the Playground
+	docker compose up -d --build
+	@echo "Starting Dwarpal — the first run downloads + builds everything, a few minutes is normal..."
+	@ok=0; for i in $$(seq 1 90); do curl -sf http://localhost:3000/healthz >/dev/null 2>&1 && { ok=1; break; }; sleep 1; done; \
+	if [ $$ok = 1 ]; then \
+		echo "✔ Dwarpal is up — opening http://localhost:5173/dashboard/playground"; \
+		(open http://localhost:5173/dashboard/playground >/dev/null 2>&1 || xdg-open http://localhost:5173/dashboard/playground >/dev/null 2>&1 || true); \
+	else \
+		echo "✗ Dwarpal didn't come up in 90s. Is Docker running? Are ports 8080/3000/5173 free? Try: make logs"; \
+	fi
 
 up: ## Build and start the full stack (detached)
 	docker compose up -d --build

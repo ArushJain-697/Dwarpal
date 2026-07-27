@@ -1,60 +1,41 @@
-import { navigate } from './App.jsx';
 import { useLiveStream } from './useLiveStream.js';
-import { StatsBar } from './StatsBar.jsx';
-import { RpsChart } from './RpsChart.jsx';
-import { AttackFeed } from './AttackFeed.jsx';
-import { CategoryBreakdown } from './CategoryBreakdown.jsx';
+import { Sidebar } from './Sidebar.jsx';
+import { Overview } from './pages/Overview.jsx';
+import { Playground } from './pages/Playground.jsx';
+import { Feed } from './pages/Feed.jsx';
+import { Analytics } from './pages/Analytics.jsx';
+import { Rules } from './pages/Rules.jsx';
+import { Settings } from './pages/Settings.jsx';
 
-export function Dashboard() {
-  const { connected, stats, attacks, series } = useLiveStream();
+// Each console route: a page title, a one-line subtitle, and its component.
+// Overview and Feed read the shared live stream; the rest fetch their own data.
+const PAGES = {
+  '/dashboard': { title: 'Overview', sub: 'Real-time traffic across the proxy edge', render: (live) => <Overview {...live} /> },
+  '/dashboard/playground': { title: 'Playground', sub: 'Fire real attacks at the proxy — no terminal needed', render: () => <Playground /> },
+  '/dashboard/feed': { title: 'Live feed', sub: 'Every blocked and rate-limited request', render: (live) => <Feed {...live} /> },
+  '/dashboard/analytics': { title: 'Analytics', sub: 'Traffic and threats over time', render: () => <Analytics /> },
+  '/dashboard/rules': { title: 'WAF rules', sub: 'The active ruleset and how it scores', render: () => <Rules /> },
+  '/dashboard/settings': { title: 'Settings', sub: 'WAF enforcement mode — the kill switch', render: () => <Settings /> },
+};
+
+export function Dashboard({ path }) {
+  const live = useLiveStream();
+  const page = PAGES[path] || PAGES['/dashboard'];
 
   return (
-    <div className="app">
+    <div className="shell">
       <div className="aurora" />
-      <div className="grain" />
+      <Sidebar path={path} connected={live.connected} />
 
-      <header className="topbar">
-        <a
-          className="tb-brand"
-          href="/"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate('/');
-          }}
-        >
-          <span className="tb-mark">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffe17c" stroke="#ffe17c" strokeWidth="1.5" strokeLinejoin="round">
-              <path d="M12 3 4 6v5c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-3Z" />
-            </svg>
-          </span>
-          Dwarpal
-          <span className="tb-sub">Threat Monitor</span>
-        </a>
-        <div className="tb-right">
-          <span className={`live ${connected ? 'on' : 'off'}`}>
-            <span className="live-dot" />
-            {connected ? 'Live' : 'Reconnecting'}
-          </span>
-        </div>
-      </header>
-
-      <main className="main">
-        <div className="main-head">
-          <h1>Overview</h1>
-          <div className="sub">Real-time traffic across the proxy edge</div>
-        </div>
-
-        <div className="enter">
-          <StatsBar stats={stats} />
-        </div>
-        <div className="enter" style={{ animationDelay: '60ms', marginTop: 20 }}>
-          <RpsChart series={series} />
-        </div>
-        <div className="panels enter" style={{ animationDelay: '120ms', marginTop: 20 }}>
-          <AttackFeed attacks={attacks} />
-          <CategoryBreakdown stats={stats} />
-        </div>
-      </main>
+      <div className="content">
+        <header className="pagebar">
+          <h1>{page.title}</h1>
+          <div className="sub">{page.sub}</div>
+        </header>
+        <main className="page" key={path}>
+          {page.render(live)}
+        </main>
+      </div>
     </div>
   );
 }

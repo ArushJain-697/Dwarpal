@@ -91,7 +91,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    command: node --watch src/index.js
+    # Self-initialize on boot: create the schema, seed demo history if the DB is
+    # empty, then start. Makes `docker compose up` a true one-command demo.
+    command: sh -c "node src/db/migrate.js && (node src/scripts/seed.js --if-empty || true) && exec node --watch src/index.js"
     environment:
       PROXY_PORT: 8080
       ADMIN_PORT: 3000

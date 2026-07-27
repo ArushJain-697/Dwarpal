@@ -18,12 +18,12 @@ function Badge({ decision, category }) {
   return <span className={`badge b-${cat}`}>{category || 'block'}</span>;
 }
 
-export function AttackFeed({ attacks }) {
+export function AttackFeed({ attacks, title = 'Live attack feed', tall = false }) {
   return (
     <div className="card">
       <div className="card-core">
         <div className="card-head">
-          <h2>Live attack feed</h2>
+          <h2>{title}</h2>
           <span className="meta">{attacks.length} events</span>
         </div>
 
@@ -40,7 +40,7 @@ export function AttackFeed({ attacks }) {
               <span className="r ip-h">Source</span>
               <span className="r">Status</span>
             </div>
-            <div className="tbody">
+            <div className={`tbody ${tall ? 'tall' : ''}`}>
               {attacks.map((e, i) => (
                 <div className="trow" key={e.id || i}>
                   <span className="t">{time(e.ts)}</span>

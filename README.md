@@ -14,6 +14,43 @@ backends except through it.
 
 ---
 
+## Try it yourself in 2 minutes (no terminal skills needed)
+
+You don't need to know Docker, `curl`, or how a WAF works to play with this.
+
+1. **Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)** and open it — wait
+   until it says **running**.
+2. **Download this project** — the green *Code ▸ Download ZIP* button on GitHub — and unzip it.
+3. **Open a terminal in that folder:**
+   - **macOS:** right-click the folder → *New Terminal at Folder* (or type `cd `, drag the folder
+     into the window, press Enter).
+   - **Windows:** open the folder, click the address bar, type `cmd`, and press Enter.
+4. **Start it with one command:**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   The first run downloads and builds everything — **a few minutes**, with lots of scrolling text.
+   That's normal; let it finish (later runs take seconds). It creates the database and seeds a day
+   of demo traffic for you. *(Have `make`? `make try` does this **and** opens the browser.)*
+
+   > Uses ports **8080**, **3000**, and **5173** — if you see `port is already allocated`, quit
+   > whatever is using that port and run the command again.
+
+5. **Open the dashboard** — paste this into your browser:
+   **http://localhost:5173/dashboard/playground**
+6. **Attack it from the browser.** On the **Playground** page, press a button — *SQL injection*,
+   *XSS*, *Path traversal*… Each fires a **real** attack at the proxy and comes back **Blocked
+   (403)**. Watch them stream into **Live feed** (in the sidebar).
+7. **See what the wall does.** Go to **Settings** (sidebar), switch the WAF to **Off**, return to
+   **Playground**, and fire the same attacks — now they get **through** (200). Switch it back to
+   **Block**. That's the whole point of the project in ten seconds.
+
+When you're done, stop everything with `docker compose down` (or `make down`).
+
+---
+
 ## The demo
 
 ```bash

@@ -112,6 +112,17 @@ async function main() {
     process.exit(1);
   }
 
+  // --if-empty: only seed a fresh database. Used by the auto-boot path so a
+  // container restart never wipes a demo the student has been playing with.
+  if (process.argv.includes('--if-empty')) {
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM request_logs');
+    if (rows[0].n > 0) {
+      console.log(`[seed] request_logs already has ${rows[0].n} rows — skipping (--if-empty)`);
+      await closePool();
+      return;
+    }
+  }
+
   await pool.query('TRUNCATE request_logs');
 
   const rows = buildRows();

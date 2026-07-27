@@ -3,9 +3,10 @@ import { Landing } from './landing/Landing.jsx';
 import { Dashboard } from './Dashboard.jsx';
 
 /**
- * Minimal client-side router — two routes, no dependency. `/dashboard` renders
- * the live monitor, everything else the marketing landing. The nginx config
- * already falls back to index.html so deep links work on refresh.
+ * Minimal client-side router — no dependency. Anything under `/dashboard`
+ * renders the console (which sub-routes itself off the path); everything else
+ * is the marketing landing. nginx falls back to index.html so deep links work
+ * on refresh.
  */
 export function App() {
   const [path, setPath] = useState(window.location.pathname);
@@ -16,7 +17,7 @@ export function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
-  return path === '/dashboard' ? <Dashboard /> : <Landing />;
+  return path.startsWith('/dashboard') ? <Dashboard path={path} /> : <Landing />;
 }
 
 // Navigate without a full reload; dispatch popstate so <App> re-renders.
