@@ -66,14 +66,20 @@ export function isBlockedAddress(host) {
 }
 
 // Does any URL inside this value point at an internal / blocked address? Scans
-// the whole field (path, query, or header), so an internal target hidden
-// anywhere in the request is caught, not just a bare query param. Handles
-// bracketed IPv6 hosts ([::ffff:127.0.0.1]).
+// the whole field, so an internal target hidden anywhere in the request is
+// caught. Captures the full authority, then strips userinfo (user@ / user:pass@)
+// and the port so tricks like http://good.com@127.0.0.1/ can't hide the real host.
 export function containsBlockedAddress(value) {
-  const re = /[a-z][a-z0-9+.-]*:\/\/(\[[^\]]+\]|[^/:?#\s&]+)/gi;
+  const re = /[a-z][a-z0-9+.-]*:\/\/([^/?#\s]+)/gi;
   let m;
   while ((m = re.exec(value)) !== null) {
-    if (isBlockedAddress(m[1])) return true;
+    let auth = m[1];
+    const at = auth.lastIndexOf('@');
+    if (at >= 0) auth = auth.slice(at + 1); // drop userinfo
+    const host = auth.startsWith('[')
+      ? auth.slice(1, auth.indexOf(']')) // bracketed IPv6
+      : auth.split(':')[0]; // strip :port
+    if (host && isBlockedAddress(host)) return true;
   }
   return false;
 }

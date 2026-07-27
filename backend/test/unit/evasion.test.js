@@ -26,10 +26,15 @@ describe('WAF evasion regressions (battle-test findings)', () => {
     expect(blocks('id=1 OR 1=1')).toBe(true);
     expect(blocks('id=1 AND SLEEP(5)')).toBe(true);
   });
-  it('blocks SSRF via shorthand / hex-dotted / ipv4-mapped ipv6', () => {
+  it('blocks SSRF via shorthand / hex-dotted / octal / ipv4-mapped ipv6', () => {
     expect(blocks('url=http://127.1/')).toBe(true);
     expect(blocks('url=http://0x7f.0.0.1/')).toBe(true);
+    expect(blocks('url=http://0177.0.0.1/')).toBe(true);
     expect(blocks('url=http://[::ffff:127.0.0.1]/')).toBe(true);
+  });
+  it('blocks SSRF hidden behind userinfo (user@host)', () => {
+    expect(blocks('url=http://expected.com@127.0.0.1/')).toBe(true);
+    expect(blocks('url=http://user:pass@127.0.0.1/admin')).toBe(true);
   });
   it('inspects the request body (all categories bypassed via POST before)', () => {
     expect(blocks("u=admin' OR '1'='1", 'body')).toBe(true);

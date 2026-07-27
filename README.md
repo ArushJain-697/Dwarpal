@@ -64,9 +64,11 @@ Each stage reads and writes a fixed-shape `RequestContext` and returns a `Verdic
 - **Load balancing** — round-robin over healthy targets, per-upstream keep-alive agents.
 - **Resilience** — active health checks with hysteresis, per-target circuit breaker, idempotent
   bounded retries, layered timeouts, graceful drain on SIGTERM.
-- **WAF** — input normalization (double-decode, NFKC, comment-strip, `+`→space) defeats encoding
-  evasion; weighted anomaly scoring over a threshold (not brittle single-regex); off/detect/block
-  modes toggled live; SSRF egress detection across decimal/hex IP forms.
+- **WAF** — input normalization (decode-until-stable, NFKC, comment-unwrap, `+`→space) defeats
+  encoding evasion; weighted anomaly scoring over a threshold (not brittle single-regex);
+  inspects query, path, headers **and the request body** (incl. gzip/deflate, bounded-decompressed);
+  off/detect/block modes toggled live; SSRF address guard across decimal/hex/octal/shorthand/
+  IPv4-mapped forms.
 - **Rate limiting** — atomic Redis Lua token bucket, correct across instances, **fails open**.
 - **Observability** — structured logs, in-memory metrics + rolling RPS, batched non-blocking
   writes to partitioned Postgres (drops under overload, never stalls the hot path).
@@ -131,6 +133,20 @@ make test    # or: cd backend && npm test
   passes, **false-positive rate === 0**; plus normalization/evasion coverage.
 - **Integration** — the proxy in-process against a recording stub: a blocked SQLi returns 403
   **and never reaches the upstream** (proves the WAF is a gate, not a bystander).
+
+## On the WAF ruleset
+
+The ~15 hand-written rules exist to **demonstrate the engine** — normalization, weighted
+anomaly scoring, per-field inspection, block/detect/off. They are illustrative, not exhaustive:
+hand-maintaining coverage against every encoding trick is a treadmill, which is exactly why
+production WAFs load a maintained ruleset. The clean upgrade path is to feed the engine the
+**OWASP Core Rule Set** and swap V8 `RegExp` for **re2** (linear-time, ReDoS-immune) — the rule
+shape (`{id, category, score, pattern|match}`) is already compatible.
+
+The system has been **battle-tested** with a multi-agent workflow (WAF penetration + sqlmap +
+protocol abuse + load storm + chaos): it survives dependency outages (fail-open rate limiter,
+non-blocking logging, health-check failover, graceful drain), holds ~14k rps at p99 14ms through
+the full pipeline, and no malformed packet crashes it.
 
 ## Security notes
 

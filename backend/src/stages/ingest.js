@@ -9,11 +9,28 @@
  *   - too many headers                     -> 431
  */
 
+import zlib from 'node:zlib';
 import { config } from '../config/env.js';
 import { shortCircuit } from '../core/verdict.js';
 
 const ALLOWED_METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']);
 const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+// Decompress a copy of the body for INSPECTION so payloads can't hide inside
+// gzip/deflate/br. The original (compressed) bytes are still what we forward.
+// maxOutputLength caps decompression so a zip-bomb can't blow up the event loop.
+// ponytail: synchronous — fine for the ≤1MB cap; go async only if it shows up hot.
+function bodyForInspection(buf, encoding, cap) {
+  const enc = (encoding || '').toLowerCase();
+  try {
+    if (enc.includes('gzip')) return zlib.gunzipSync(buf, { maxOutputLength: cap }).toString('utf8');
+    if (enc.includes('deflate')) return zlib.inflateSync(buf, { maxOutputLength: cap }).toString('utf8');
+    if (enc.includes('br')) return zlib.brotliDecompressSync(buf, { maxOutputLength: cap }).toString('utf8');
+  } catch {
+    return buf.toString('latin1'); // undecodable / bomb — inspect raw bytes, don't crash
+  }
+  return buf.toString('utf8');
+}
 
 // Buffer the body up to `max`, keep draining past that so the socket stays
 // clean, and report `over` if the cap was exceeded.
@@ -65,8 +82,8 @@ export const ingestStage = {
       const { buf, over } = await readBody(req, config.maxBodyBytes);
       if (over) return shortCircuit(ctx, 413, 'payload too large');
       if (buf && buf.length) {
-        ctx.body = buf;
-        ctx.bodyText = buf.toString('utf8');
+        ctx.body = buf; // forwarded upstream as-is
+        ctx.bodyText = bodyForInspection(buf, req.headers['content-encoding'], config.maxBodyBytes);
       }
     }
 
