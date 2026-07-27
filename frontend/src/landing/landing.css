@@ -198,7 +198,8 @@
   line-height: 1.55;
   margin-bottom: 32px;
 }
-.hero-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-cta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.hero-hint { font-size: 14px; font-weight: 600; opacity: 0.72; margin-top: 18px; margin-bottom: 0; max-width: 40ch; }
 
 /* browser mockup */
 .mock {

@@ -21,6 +21,18 @@ function OpenBtn({ size = 'lg', variant = 'black' }) {
   );
 }
 
+// The interactive hook: drop straight onto the Playground and attack it.
+function PlayBtn({ size = 'lg', variant = 'black', children = 'Attack it yourself' }) {
+  return (
+    <button className={`btn btn-${variant} btn-${size}`} onClick={() => navigate('/dashboard/playground')}>
+      {children}
+      <span className="arw">
+        <Arw />
+      </span>
+    </button>
+  );
+}
+
 function Nav() {
   return (
     <nav className="bnav">
@@ -37,9 +49,10 @@ function Nav() {
           <a href="#pipeline">Pipeline</a>
           <a href="#features">Features</a>
           <a href="#demo">Demo</a>
+          <a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>Dashboard</a>
         </div>
-        <button className="btn btn-black btn-sm" onClick={() => navigate('/dashboard')}>
-          Open the dashboard
+        <button className="btn btn-black btn-sm" onClick={() => navigate('/dashboard/playground')}>
+          Try it live ⚡
         </button>
       </div>
     </nav>
@@ -62,11 +75,10 @@ function Hero() {
           </h1>
           <p>A self-hosted reverse proxy and web application firewall — a mini-Cloudflare you fully own, end to end.</p>
           <div className="hero-cta">
-            <OpenBtn size="lg" variant="black" />
-            <a className="btn btn-white btn-sm" href="#demo">
-              See the demo
-            </a>
+            <PlayBtn size="lg" variant="black" />
+            <OpenBtn size="sm" variant="white" />
           </div>
+          <p className="hero-hint">No setup — fire real attacks in the browser and watch the wall block them.</p>
         </div>
 
         <div className="mock">
@@ -334,9 +346,10 @@ function FinalCta() {
     <section className="sec sec-pad final dots">
       <div className="wrap">
         <h2>Watch it block a live attack.</h2>
-        <p>The dashboard streams every request the moment it happens.</p>
+        <p>Open the Playground and fire one yourself — it blocks the moment it happens.</p>
         <div className="hero-cta">
-          <OpenBtn size="lg" variant="black" />
+          <PlayBtn size="lg" variant="black" />
+          <OpenBtn size="sm" variant="white" />
         </div>
       </div>
     </section>
@@ -359,7 +372,9 @@ function Footer() {
             <h5>Product</h5>
             <a href="#pipeline">Pipeline</a>
             <a href="#features">Features</a>
-            <a href="#demo">Demo</a>
+            <a href="/dashboard/playground" onClick={(e) => { e.preventDefault(); navigate('/dashboard/playground'); }}>
+              Playground
+            </a>
             <a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
               Dashboard
             </a>
