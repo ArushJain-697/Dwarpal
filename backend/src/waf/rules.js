@@ -15,22 +15,31 @@ import { containsBlockedAddress } from './ssrf.js';
 export const RULES = [
   // SQL injection
   { id: 'sqli-or-1-1', category: 'sqli', score: 5, pattern: /'\s*or\s*'?\d+'?\s*=\s*'?\d+/i },
-  { id: 'sqli-union', category: 'sqli', score: 5, pattern: /union\s+select/i },
+  // quote-less numeric tautology, e.g. 1 OR 1=1 (same number both sides)
+  { id: 'sqli-tautology', category: 'sqli', score: 5, pattern: /\b(?:or|and)\s+(\d+)\s*=\s*\1\b/i },
+  // time-based blind
+  { id: 'sqli-sleep', category: 'sqli', score: 5, pattern: /\b(?:sleep|benchmark|pg_sleep)\s*\(|waitfor\s+delay/i },
+  // UNION SELECT, but require a real column/table token nearby so it doesn't
+  // fire on prose like "the UNION SELECT clause explained".
+  { id: 'sqli-union', category: 'sqli', score: 5, pattern: /union\s+select\b[\s\S]{0,60}?(?:\bfrom\b|,|\*|--|#|;|\bwhere\b|\bnull\b|\()/i },
   { id: 'sqli-comment', category: 'sqli', score: 2, pattern: /(--|#|\/\*)/ },
 
   // Cross-site scripting
   { id: 'xss-script-tag', category: 'xss', score: 5, pattern: /<\s*script/i },
   { id: 'xss-event-handler', category: 'xss', score: 3, pattern: /on\w+\s*=/i },
-  // a tag carrying an event handler, e.g. <img src=x onerror=...> — strong signal
-  { id: 'xss-tag-event', category: 'xss', score: 5, pattern: /<[a-z][^>]*\son[a-z]+\s*=/i },
+  // a tag carrying an event handler, e.g. <img src=x onerror=...> or <svg/onload=...>.
+  // The separator before the handler may be whitespace OR '/'.
+  { id: 'xss-tag-event', category: 'xss', score: 5, pattern: /<[a-z][^>]*[\s/]on[a-z]+\s*=/i },
   { id: 'xss-js-uri', category: 'xss', score: 5, pattern: /javascript:/i },
 
-  // Path traversal
-  { id: 'traversal-dotdot', category: 'traversal', score: 5, pattern: /\.\.[\/\\]/ },
+  // Path traversal ('..' followed by /, \, or ; path-parameter trick)
+  { id: 'traversal-dotdot', category: 'traversal', score: 5, pattern: /\.\.[\/\\;]/ },
   { id: 'traversal-etc-passwd', category: 'traversal', score: 5, pattern: /\/etc\/passwd/i },
 
   // Command injection
   { id: 'cmdi-shell-meta', category: 'cmdi', score: 4, pattern: /[;|`]|\$\(/ },
+  // command substitution $(...) / `...` — strong standalone signal
+  { id: 'cmdi-subst', category: 'cmdi', score: 5, pattern: /\$\([^)]*\)|`[^`]*`/ },
   {
     id: 'cmdi-chained-cmd',
     category: 'cmdi',

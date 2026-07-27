@@ -12,7 +12,7 @@ import http from 'node:http';
 import { config } from '../config/env.js';
 import { pickTarget } from './balancer.js';
 import { onSuccess, onFailure } from './breaker.js';
-import { canRetry, RETRYABLE_METHODS } from './retry.js';
+import { canRetry } from './retry.js';
 
 // Hop-by-hop headers must not be forwarded by a proxy (RFC 7230).
 const HOP_BY_HOP = new Set([
@@ -113,11 +113,12 @@ function attempt(ctx, tried, attemptNo) {
   // Client hung up before we finished — tear down the upstream request.
   req.on('aborted', () => proxyReq.destroy());
 
-  // Retryable methods are bodyless, so we don't pipe (keeps retries clean).
-  // Everything else streams its body up to the backend.
-  if (RETRYABLE_METHODS.has(req.method)) {
-    proxyReq.end();
+  // The body was buffered by the ingest stage (so the WAF could inspect it);
+  // replay it upstream. Bodyless requests just end. Buffering also makes retries
+  // clean — every attempt writes the same bytes.
+  if (ctx.body && ctx.body.length) {
+    proxyReq.end(ctx.body);
   } else {
-    req.pipe(proxyReq);
+    proxyReq.end();
   }
 }

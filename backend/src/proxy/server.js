@@ -63,6 +63,9 @@ export function createServer() {
   server.headersTimeout = 10_000;
   server.keepAliveTimeout = 65_000;
   server.maxHeadersCount = 1000;
+  // Check idle/slow connections every 2s so headersTimeout fires near its
+  // nominal 10s instead of Node's default 30s window.
+  server.connectionsCheckingInterval = 2_000;
 
   return server;
 }

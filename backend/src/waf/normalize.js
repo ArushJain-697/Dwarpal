@@ -13,24 +13,26 @@
  * gets forwarded upstream.
  */
 
-// URL-decode up to twice, since double-encoding is a common evasion. A
-// malformed sequence is left as-is (and treated as suspicious downstream).
-function urlDecodeTwice(value) {
+// URL-decode until the string stops changing (bounded), so triple+ encoding
+// (%25252e -> %252e -> %2e -> .) can't slip past. A malformed sequence stops
+// the loop and is treated as suspicious downstream.
+function urlDecodeStable(value) {
   let out = value;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 5; i++) {
+    let decoded;
     try {
-      const decoded = decodeURIComponent(out);
-      if (decoded === out) break;
-      out = decoded;
+      decoded = decodeURIComponent(out);
     } catch {
       break;
     }
+    if (decoded === out) break;
+    out = decoded;
   }
   return out;
 }
 
 export function canonicalize(value) {
-  let v = urlDecodeTwice(value);
+  let v = urlDecodeStable(value);
 
   // In a query string '+' encodes a space (form-encoding). Fold it so a payload
   // hidden behind '+' separators (e.g. 1'+OR+'1'='1) can't slip past the rules.
@@ -42,8 +44,12 @@ export function canonicalize(value) {
   // Drop null bytes.
   v = v.replace(/\0/g, '');
 
-  // Strip inline SQL/C comments so UNION/**/SELECT collapses together.
-  v = v.replace(/\/\*.*?\*\//gs, ' ');
+  // MySQL executable comments /*!...*/ RUN the code inside — unwrap them (keep
+  // the payload) rather than deleting it, which used to hide the SELECT.
+  v = v.replace(/\/\*!(?:\d+)?([\s\S]*?)\*\//g, ' $1 ');
+
+  // Strip remaining plain /* */ comments (their contents are inert).
+  v = v.replace(/\/\*[\s\S]*?\*\//g, ' ');
 
   // Collapse runs of whitespace to single spaces.
   v = v.replace(/\s+/g, ' ');

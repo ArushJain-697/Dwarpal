@@ -76,6 +76,7 @@ services:
     ports:
       - '8080:8080'
       - '3000:3000'
+    restart: unless-stopped # auto-recover if the process ever dies
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

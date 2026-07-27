@@ -12,7 +12,7 @@ export const CORPUS = {
       "1' OR '1'='1",
       "1'+OR+'1'='1", // '+' as space — the form-encoding evasion
       '1 UNION SELECT password FROM users',
-      'UNION/**/SELECT secret', // inline-comment evasion
+      'UNION/**/SELECT pw,id FROM users', // inline-comment evasion
     ],
     benign: [
       'I love the union of jazz',

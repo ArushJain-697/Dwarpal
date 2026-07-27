@@ -13,6 +13,8 @@ import { getRecent } from '../obs/recentLog.js';
 import { queryLogs } from '../db/logsQuery.js';
 import { getWafMode, setWafMode } from '../config/settings.js';
 import { publishConfig } from '../redis/pubsub.js';
+import { getPool } from '../db/pool.js';
+import { getRedis } from '../redis/client.js';
 import { attachWebSocket } from './ws.js';
 
 function sendJson(res, status, body) {
@@ -52,6 +54,24 @@ async function handle(req, res) {
   if (req.method === 'GET' && path === '/healthz') {
     res.writeHead(200, { 'content-type': 'text/plain' });
     return res.end('ok\n');
+  }
+
+  // Readiness: dependencies reachable? For an orchestrator/LB to gate traffic.
+  if (req.method === 'GET' && path === '/readyz') {
+    const pool = getPool();
+    const redis = getRedis();
+    let dbOk = true;
+    let redisOk = true;
+    if (pool) {
+      try {
+        await pool.query('SELECT 1');
+      } catch {
+        dbOk = false;
+      }
+    }
+    if (redis) redisOk = redis.status === 'ready';
+    const ready = dbOk && redisOk;
+    return sendJson(res, ready ? 200 : 503, { ready, dbOk, redisOk });
   }
 
   if (req.method === 'GET' && path === '/api/logs') {

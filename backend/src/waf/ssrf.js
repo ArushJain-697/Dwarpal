@@ -7,25 +7,36 @@
  * or hex. We normalize those forms to octets before checking the ranges.
  */
 
-// Parse an IPv4 written as dotted / decimal / hex into [a,b,c,d], or null.
-function parseIPv4(host) {
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
-    const parts = host.split('.').map(Number);
-    return parts.every((n) => n <= 255) ? parts : null;
-  }
-  if (/^\d+$/.test(host)) {
-    const n = Number(host);
-    return n <= 0xffffffff ? octets(n) : null;
-  }
-  if (/^0x[0-9a-f]+$/i.test(host)) {
-    const n = parseInt(host, 16);
-    return n <= 0xffffffff ? octets(n) : null;
-  }
+// Parse one address part as decimal / hex (0x..) / octal (0..).
+function parseNum(s) {
+  if (/^0x[0-9a-f]+$/i.test(s)) return parseInt(s, 16);
+  if (/^0[0-7]+$/.test(s)) return parseInt(s, 8);
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
   return null;
 }
 
-function octets(n) {
-  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+// inet_aton semantics: 1-4 dotted parts, each dec/hex/octal; the LAST part
+// fills all remaining low bytes (so 127.1 == 127.0.0.1, 0x7f.0.0.1 == 127.0.0.1,
+// 2130706433 == 127.0.0.1). Returns [a,b,c,d] or null.
+function parseIPv4(host) {
+  const parts = host.split('.');
+  if (parts.length < 1 || parts.length > 4) return null;
+  const nums = parts.map(parseNum);
+  if (nums.some((n) => n === null)) return null;
+
+  const leading = nums.length - 1;
+  for (let i = 0; i < leading; i++) if (nums[i] > 255) return null; // leading parts are single bytes
+  const last = nums[leading];
+  if (last > 2 ** (8 * (4 - leading)) - 1) return null; // last must fit the rest
+
+  const bytes = [0, 0, 0, 0];
+  for (let i = 0; i < leading; i++) bytes[i] = nums[i];
+  let l = last;
+  for (let i = 3; i >= leading; i--) {
+    bytes[i] = l & 255;
+    l = Math.floor(l / 256);
+  }
+  return bytes;
 }
 
 function isPrivateV4([a, b]) {
@@ -39,19 +50,27 @@ function isPrivateV4([a, b]) {
 }
 
 export function isBlockedAddress(host) {
-  const h = host.toLowerCase().replace(/^\[|\]$/g, '');
+  let h = host.toLowerCase().replace(/^\[|\]$/g, '');
   if (h === 'localhost') return true;
   if (h === '::1' || h === '::') return true; // IPv6 loopback / unspecified
 
+  // IPv4-mapped IPv6, e.g. ::ffff:127.0.0.1 -> 127.0.0.1
+  const mapped = h.match(/^::ffff:(\d+(?:\.\d+){0,3}|0x[0-9a-f]+)$/i);
+  if (mapped) h = mapped[1];
+
   const v4 = parseIPv4(h);
   return v4 ? isPrivateV4(v4) : false;
+  // ponytail: hostname-based SSRF (e.g. *.nip.io, DNS rebinding) needs DNS
+  // resolution, which belongs at fetch time in the backend's HTTP client, not
+  // in the WAF hot path.
 }
 
 // Does any URL inside this value point at an internal / blocked address? Scans
 // the whole field (path, query, or header), so an internal target hidden
-// anywhere in the request is caught, not just a bare query param.
+// anywhere in the request is caught, not just a bare query param. Handles
+// bracketed IPv6 hosts ([::ffff:127.0.0.1]).
 export function containsBlockedAddress(value) {
-  const re = /[a-z][a-z0-9+.-]*:\/\/([^/:?#\s&]+)/gi;
+  const re = /[a-z][a-z0-9+.-]*:\/\/(\[[^\]]+\]|[^/:?#\s&]+)/gi;
   let m;
   while ((m = re.exec(value)) !== null) {
     if (isBlockedAddress(m[1])) return true;

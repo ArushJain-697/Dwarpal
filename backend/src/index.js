@@ -17,6 +17,14 @@ import { startPartitionMaintenance } from './db/partitions.js';
 import { subscribeConfig } from './redis/pubsub.js';
 import { setWafMode } from './config/settings.js';
 
+// Last-resort net: log any escaped error but keep serving. Request-scoped
+// errors are already caught in the pipeline; this stops a stray throw from
+// silently killing the proxy.
+// ponytail: keeps a possibly-corrupt process alive; a prod supervisor should
+// still restart on repeated errors.
+process.on('uncaughtException', (err) => console.error(`[fatal] uncaughtException: ${err.stack || err}`));
+process.on('unhandledRejection', (err) => console.error(`[fatal] unhandledRejection: ${err}`));
+
 function main() {
   const startedAt = new Date().toISOString();
   console.log(`[dwarpal] starting up (${startedAt})`);

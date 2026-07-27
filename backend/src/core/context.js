@@ -9,7 +9,20 @@
 import crypto from 'node:crypto';
 
 export function createContext(req, res) {
-  const url = new URL(req.url, 'http://localhost');
+  let path = '/';
+  let query = new URLSearchParams();
+  let rawQuery = '';
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    path = url.pathname;
+    query = url.searchParams;
+    rawQuery = url.search; // the raw, still-encoded "?..." — used by the WAF
+  } catch {
+    // Malformed request target (e.g. absolute-form with an out-of-range port).
+    // Never throw here — this runs before the pipeline, so a throw would crash
+    // the whole process. Keep the raw target as the path so it 404s instead.
+    path = req.url ?? '/';
+  }
 
   return {
     id: crypto.randomUUID(),
@@ -19,9 +32,9 @@ export function createContext(req, res) {
     res,
 
     method: req.method,
-    path: url.pathname,
-    query: url.searchParams,
-    rawQuery: url.search, // the raw, still-encoded "?..." — used by the WAF
+    path,
+    query,
+    rawQuery,
     headers: req.headers,
     clientIp: req.socket.remoteAddress,
   };

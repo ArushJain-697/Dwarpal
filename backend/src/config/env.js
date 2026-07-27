@@ -88,6 +88,8 @@ function loadConfig(env = process.env) {
 
     // reject requests with more than this many headers (slow-loris / abuse)
     maxHeaderCount: toInt(env.MAX_HEADER_COUNT ?? '100', 'MAX_HEADER_COUNT'),
+    // max request body the WAF buffers + inspects; larger -> 413
+    maxBodyBytes: toInt(env.MAX_BODY_BYTES ?? '1048576', 'MAX_BODY_BYTES'),
 
     // Postgres connection string (optional — logging degrades gracefully if unset)
     databaseUrl: env.DATABASE_URL ?? null,
